@@ -30,3 +30,13 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+.idea
+*.bak
+vendor
+config.yaml
+/docker/data
+deploy/local/docker/data
+deploy/local/pgdata
+.env
+.DS_Store

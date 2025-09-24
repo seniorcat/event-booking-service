@@ -1,9 +1,8 @@
 package config
 
 import (
-	"time"
-
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -14,8 +13,14 @@ type Server struct {
 	WriteTimeout time.Duration `yaml:"write_timeout"`
 }
 
+type Database struct {
+	DSN         string `yaml:"dsn"`
+	AutoMigrate bool   `yaml:"auto_migrate"`
+}
+
 type Config struct {
-	Server Server `yaml:"server"`
+	Server   Server   `yaml:"server"`
+	Database Database `yaml:"database"`
 }
 
 func Load(path string) (*Config, error) {
@@ -29,4 +34,14 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+// LoadConfig загружает конфигурацию, читая путь из переменной окружения CONFIG_PATH
+// с дефолтом на "config.yaml" в корне приложения.
+func LoadConfig() (*Config, error) {
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		path = "config.yaml"
+	}
+	return Load(path)
 }
