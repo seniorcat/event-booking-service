@@ -10,6 +10,7 @@ import (
 	"laschool.ru/event-booking-service/internal/config"
 	"laschool.ru/event-booking-service/internal/db"
 	httprouter "laschool.ru/event-booking-service/internal/http"
+	"laschool.ru/event-booking-service/internal/http/middleware"
 	di "laschool.ru/event-booking-service/pkg/container"
 )
 
@@ -36,11 +37,13 @@ func main() {
 
 	// маршруты
 	mux := httprouter.NewRouter()
+	// логирование сервера
+	loggingMux := middleware.LoggingMiddleware(mux)
 
 	// старт сервера
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-		Handler:      mux,
+		Handler:      loggingMux,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
