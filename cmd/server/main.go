@@ -39,11 +39,12 @@ func main() {
 	mux := httprouter.NewRouter()
 	// логирование сервера
 	loggingMux := middleware.LoggingMiddleware(mux)
+	muxWithLogAndPanic := middleware.PanicMiddleware(loggingMux)
 
 	// старт сервера
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-		Handler:      loggingMux,
+		Handler:      muxWithLogAndPanic,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
