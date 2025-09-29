@@ -32,13 +32,13 @@ func parseIDFromPath(path string) (int64, bool) {
 // POST /events
 func CreateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
@@ -52,7 +52,7 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 		Capacity    int       `json:"capacity"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+		writeError(w, http.StatusBadRequest, "invalid json")
 		return
 	}
 
@@ -65,7 +65,7 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 		Capacity:    req.Capacity,
 	})
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
@@ -74,24 +74,24 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 // GET /events/{id}
 func GetEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	id, ok := parseIDFromPath(r.URL.Path)
 	if !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		writeError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
 
 	e, err := svc.Get(r.Context(), id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
 	writeJSON(w, http.StatusOK, e)
@@ -100,12 +100,12 @@ func GetEvent(w http.ResponseWriter, r *http.Request) {
 // GET /events
 func ListEvents(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
@@ -126,7 +126,7 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 
 	list, err := svc.List(r.Context(), limit, offset)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list"})
+		writeError(w, http.StatusInternalServerError, "failed to list events")
 		return
 	}
 	writeJSON(w, http.StatusOK, list)
@@ -135,17 +135,17 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 // PUT /events/{id}
 func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	id, ok := parseIDFromPath(r.URL.Path)
 	if !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		writeError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
@@ -159,7 +159,7 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		Capacity    int       `json:"capacity"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+		writeError(w, http.StatusBadRequest, "invalid json")
 		return
 	}
 
@@ -174,7 +174,7 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:   time.Now(),
 	})
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -183,23 +183,23 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 // DELETE /events/{id}
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	id, ok := parseIDFromPath(r.URL.Path)
 	if !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		writeError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
 
 	if err := svc.Delete(r.Context(), id); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete"})
+		writeError(w, http.StatusInternalServerError, "failed to delete event")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

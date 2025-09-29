@@ -26,12 +26,12 @@ func parseID(path string) (int64, bool) {
 // POST /bookings
 func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
@@ -43,19 +43,19 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 		Seats   int   `json:"seats"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+		writeError(w, http.StatusBadRequest, "invalid json")
 		return
 	}
 
 	e, err := esvc.Get(r.Context(), req.EventID)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "event not found"})
+		writeError(w, http.StatusBadRequest, "event not found")
 		return
 	}
 
 	id, err := bsvc.Create(r.Context(), &booking.Booking{EventID: req.EventID, UserID: req.UserID, Seats: req.Seats}, e.Capacity)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
@@ -64,23 +64,23 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 // GET /bookings/{id}
 func GetBooking(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	id, ok := parseID(r.URL.Path)
 	if !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		writeError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
 	b, err := bsvc.Get(r.Context(), id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
 	writeJSON(w, http.StatusOK, b)
@@ -89,23 +89,23 @@ func GetBooking(w http.ResponseWriter, r *http.Request) {
 // GET /events/{id}/bookings
 func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	// ожидаем /events/{id}/bookings
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(parts) < 3 || parts[len(parts)-1] != "bookings" {
-		w.WriteHeader(http.StatusNotFound)
+		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
 	eventID, err := strconv.ParseInt(parts[len(parts)-2], 10, 64)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid event id"})
+		writeError(w, http.StatusBadRequest, "invalid event id")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
@@ -124,7 +124,7 @@ func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 
 	list, err := bsvc.ListByEvent(r.Context(), eventID, limit, offset)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list"})
+		writeError(w, http.StatusInternalServerError, "failed to list bookings")
 		return
 	}
 	writeJSON(w, http.StatusOK, list)
@@ -133,22 +133,22 @@ func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 // DELETE /bookings/{id}
 func CancelBooking(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	id, ok := parseID(r.URL.Path)
 	if !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+		writeError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	ctn, err := container.Instance(nil, nil)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "container init failed"})
+		writeError(w, http.StatusInternalServerError, "container init failed")
 		return
 	}
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
 	if err := bsvc.Cancel(r.Context(), id); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to cancel"})
+		writeError(w, http.StatusInternalServerError, "failed to cancel booking")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
