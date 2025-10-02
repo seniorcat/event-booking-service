@@ -1,7 +1,7 @@
-# server:
-#   port: 8080
-#   read_timeout: 5s
-#   write_timeout: 5s
+server:
+  port: 8080
+  read_timeout: 5s
+  write_timeout: 5s
 database:
   dsn: "postgres://user:password@localhost:5432/eventdb?sslmode=disable"
   auto_migrate: true
