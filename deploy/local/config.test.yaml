@@ -4,4 +4,4 @@
 #   write_timeout: 5s
 database:
   dsn: "postgres://user:password@localhost:5432/eventdb_test?sslmode=disable"
-  auto_migrate: true
+ 
