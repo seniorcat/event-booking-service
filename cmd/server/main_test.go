@@ -45,8 +45,7 @@ func getProjectRoot() string {
 	if err != nil {
 		panic(fmt.Sprintf("failed to get cwd: %v", err))
 	}
-	// cwd = .../event-booking-service/cmd/server
-	// поднимаемся на два уровня выше, чтобы попасть в корень проекта
+
 	return filepath.Join(cwd, "..", "..")
 }
 
@@ -55,7 +54,7 @@ func TestMain(m *testing.M) {
 
 	configFile := os.Getenv("CONFIG_FILE")
 	if configFile == "" {
-		configFile = filepath.Join(root, "deploy", "local", "config.test.yaml")
+		configFile = filepath.Join(root, "int-tests", "config.test.yaml")
 	}
 
 	cfg, err := loadTestConfig(configFile)
