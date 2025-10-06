@@ -84,6 +84,16 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("migrations failed: %v", err))
 	}
 
+	//добавляем фиктивного пользователя для тестов
+	_, err = dbConn.Exec(`
+		INSERT INTO users (id, name, email)
+		VALUES (1, 'Test User', 'test@example.com')
+		ON CONFLICT (id) DO NOTHING
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to insert test user: %v", err))
+	}
+
 	// инициализация DI
 	ctn, err := initTestDI(configFile)
 	if err != nil {
@@ -119,6 +129,9 @@ func doRequest(t *testing.T, method, path string, body any) *httptest.ResponseRe
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	server.ServeHTTP(w, req)
+	if w.Code >= 400 {
+		fmt.Printf("\n[DEBUG] %s %s → %d\nResponse body: %s\n\n", method, path, w.Code, w.Body.String())
+	}
 	return w
 }
 
@@ -179,11 +192,7 @@ func TestEventCRUD(t *testing.T) {
 }
 
 func TestBookingCRUD(t *testing.T) {
-
-	// Создаём событие с вместимостью 10
 	eventID := createEvent(t, 10)
-
-	// Create
 
 	resp := createBooking(t, eventID, 3)
 	require.Equal(t, http.StatusCreated, resp.Code)
@@ -192,11 +201,8 @@ func TestBookingCRUD(t *testing.T) {
 		ID int64 `json:"id"`
 	}
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&data))
-	require.NotZero(t, data.ID, "booking id should not be zero")
-
+	require.NotZero(t, data.ID)
 	bookingID := data.ID
-
-	//  Get
 
 	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
 	require.Equal(t, http.StatusOK, resp.Code)
@@ -212,17 +218,21 @@ func TestBookingCRUD(t *testing.T) {
 	require.Equal(t, eventID, b.EventID)
 	require.Equal(t, int64(1), b.UserID)
 	require.Equal(t, 3, b.Seats)
-	require.Equal(t, "active", b.Status)
+	require.Equal(t, "confirmed", b.Status)
 
-	// Delete booking
-
+	// Отмена брони
 	resp = doRequest(t, "DELETE", fmt.Sprintf("/bookings/%d", bookingID), nil)
 	require.Equal(t, http.StatusNoContent, resp.Code)
 
-	//  Ensure deleted
-
+	// Проверяем, что бронь осталась, но статус "cancelled"
 	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
-	require.Equal(t, http.StatusNotFound, resp.Code)
+	require.Equal(t, http.StatusOK, resp.Code)
+
+	var cancelled struct {
+		Status string `json:"status"`
+	}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&cancelled))
+	require.Equal(t, "cancelled", cancelled.Status)
 }
 
 func TestBookingCapacity(t *testing.T) {
