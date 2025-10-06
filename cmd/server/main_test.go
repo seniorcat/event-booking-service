@@ -148,9 +148,7 @@ func createBooking(t *testing.T, eventID int64, seats int) *httptest.ResponseRec
 	})
 }
 
-// =======================
-// 🔹 Тесты
-// =======================
+//Тесты
 
 func TestEventCRUD(t *testing.T) {
 	// Create
@@ -177,6 +175,53 @@ func TestEventCRUD(t *testing.T) {
 
 	// Ensure deleted
 	resp = doRequest(t, "GET", fmt.Sprintf("/events/%d", eventID), nil)
+	require.Equal(t, http.StatusNotFound, resp.Code)
+}
+
+func TestBookingCRUD(t *testing.T) {
+
+	// Создаём событие с вместимостью 10
+	eventID := createEvent(t, 10)
+
+	// Create
+
+	resp := createBooking(t, eventID, 3)
+	require.Equal(t, http.StatusCreated, resp.Code)
+
+	var data struct {
+		ID int64 `json:"id"`
+	}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&data))
+	require.NotZero(t, data.ID, "booking id should not be zero")
+
+	bookingID := data.ID
+
+	//  Get
+
+	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
+	require.Equal(t, http.StatusOK, resp.Code)
+
+	var b struct {
+		ID      int64  `json:"id"`
+		EventID int64  `json:"event_id"`
+		UserID  int64  `json:"user_id"`
+		Seats   int    `json:"seats"`
+		Status  string `json:"status"`
+	}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&b))
+	require.Equal(t, eventID, b.EventID)
+	require.Equal(t, int64(1), b.UserID)
+	require.Equal(t, 3, b.Seats)
+	require.Equal(t, "active", b.Status)
+
+	// Delete booking
+
+	resp = doRequest(t, "DELETE", fmt.Sprintf("/bookings/%d", bookingID), nil)
+	require.Equal(t, http.StatusNoContent, resp.Code)
+
+	//  Ensure deleted
+
+	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
 	require.Equal(t, http.StatusNotFound, resp.Code)
 }
 
