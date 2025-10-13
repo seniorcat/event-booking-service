@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"laschool.ru/event-booking-service/internal/http/handlers"
+	"laschool.ru/event-booking-service/internal/user"
 )
 
 func NewRouter() *http.ServeMux {
@@ -57,6 +58,16 @@ func NewRouter() *http.ServeMux {
 			handlers.GetBooking(w, r)
 		case http.MethodDelete:
 			handlers.CancelBooking(w, r)
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
+
+	// User endpoints
+	mux.HandleFunc("/users/register", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			user.RegisterHandler(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
