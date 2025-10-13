@@ -86,8 +86,8 @@ func TestMain(m *testing.M) {
 
 	//добавляем фиктивного пользователя для тестов
 	_, err = dbConn.Exec(`
-		INSERT INTO users (id, name, email)
-		VALUES (1, 'Test User', 'test@example.com')
+		INSERT INTO users (id, name, email, password_hash)
+		VALUES (1, 'Test User', 'test@example.com', 'asdasfdssd2#$$@#sdsfsdf')
 		ON CONFLICT (id) DO NOTHING
 	`)
 	if err != nil {

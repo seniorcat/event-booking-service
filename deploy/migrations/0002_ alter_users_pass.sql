@@ -9,5 +9,5 @@ ALTER COLUMN password_hash DROP DEFAULT;
 
 -- +goose Down
 ALTER TABLE users
-DROP password_hash
+DROP password_hash;
 
