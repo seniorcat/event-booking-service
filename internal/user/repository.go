@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -12,6 +14,7 @@ type Repository interface {
 	Create(ctx context.Context, u *User) (int64, error)
 	IsEmailUnique(ctx context.Context, u *User) (bool, error)
 	//GetByID(ctx context.Context, id int64) (*User, error)
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
 }
 
 type repository struct {
@@ -46,8 +49,21 @@ func (r *repository) IsEmailUnique(ctx context.Context, u *User) (bool, error) {
 	var exist bool
 	const q = "SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)"
 	if err := r.db.QueryRowContext(ctx, q, u.Email).Scan(&exist); err != nil {
-		return false, fmt.Errorf("checking email uniaueness: %w", err)
+		return false, fmt.Errorf("checking email uniqueness: %w", err)
 	}
 	return !exist, nil
 
+}
+
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+	var user User
+	const q = "SELECT id, email, name, password_hash FROM users WHERE email = $1"
+	err := r.db.GetContext(ctx, &user, q, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user with email %s not exist", email)
+		}
+		return nil, fmt.Errorf("query user by email error: %w", err)
+	}
+	return &user, nil
 }

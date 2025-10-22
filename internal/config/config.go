@@ -18,9 +18,15 @@ type Database struct {
 	AutoMigrate bool   `yaml:"auto_migrate"`
 }
 
+type JWT struct {
+	Secret string        `yaml:"secret"`
+	TTL    time.Duration `yaml:"duration"`
+}
+
 type Config struct {
 	Server   Server   `yaml:"server"`
 	Database Database `yaml:"database"`
+	JWT      JWT      `yaml:"jwt"`
 }
 
 func Load(path string) (*Config, error) {
