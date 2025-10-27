@@ -5,11 +5,16 @@ import (
 	"strings"
 
 	"laschool.ru/event-booking-service/internal/http/handlers"
+	"laschool.ru/event-booking-service/internal/http/middleware"
 	"laschool.ru/event-booking-service/internal/user"
 )
 
 func NewRouter() *http.ServeMux {
 	mux := http.NewServeMux()
+	auth, err := middleware.NewAuthMiddleware()
+	if err != nil {
+		panic("failed to init auth middleware: " + err.Error())
+	}
 
 	mux.HandleFunc("/ping", handlers.PingHandler)
 	mux.HandleFunc("/health", handlers.HealthHandler)
@@ -20,7 +25,7 @@ func NewRouter() *http.ServeMux {
 		case http.MethodGet:
 			handlers.ListEvents(w, r)
 		case http.MethodPost:
-			handlers.CreateEvent(w, r)
+			auth(http.HandlerFunc(handlers.CreateEvent)).ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
@@ -35,9 +40,9 @@ func NewRouter() *http.ServeMux {
 		case http.MethodGet:
 			handlers.GetEvent(w, r)
 		case http.MethodPut:
-			handlers.UpdateEvent(w, r)
+			auth(http.HandlerFunc(handlers.UpdateEvent)).ServeHTTP(w, r)
 		case http.MethodDelete:
-			handlers.DeleteEvent(w, r)
+			auth(http.HandlerFunc(handlers.DeleteEvent)).ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
@@ -47,7 +52,7 @@ func NewRouter() *http.ServeMux {
 	mux.HandleFunc("/bookings", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			handlers.CreateBooking(w, r)
+			auth(http.HandlerFunc(handlers.CreateBooking)).ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
@@ -57,7 +62,7 @@ func NewRouter() *http.ServeMux {
 		case http.MethodGet:
 			handlers.GetBooking(w, r)
 		case http.MethodDelete:
-			handlers.CancelBooking(w, r)
+			auth(http.HandlerFunc(handlers.CancelBooking)).ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
