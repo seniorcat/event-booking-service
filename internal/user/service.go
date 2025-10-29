@@ -21,6 +21,7 @@ type service struct {
 }
 
 func NewService(repo Repository, secret string, ttl time.Duration) Service {
+
 	return &service{repo: repo, secret: secret, ttl: ttl}
 }
 

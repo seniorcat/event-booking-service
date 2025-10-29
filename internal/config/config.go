@@ -20,7 +20,7 @@ type Database struct {
 
 type JWT struct {
 	Secret string        `yaml:"secret"`
-	TTL    time.Duration `yaml:"duration"`
+	TTL    time.Duration `yaml:"ttl"`
 }
 
 type Config struct {
