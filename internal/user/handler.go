@@ -19,7 +19,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urep := ctn.Get(DIUserRepo).(Repository)
+	userv := ctn.Get(DIUserService).(Service)
 
 	var req struct {
 		Name     string `json:"name"`
@@ -36,7 +36,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := urep.Create(r.Context(), &User{Email: req.Email, Name: req.Name, Password: req.Password})
+	id, err := userv.Register(r.Context(), &User{Email: req.Email, Name: req.Name, Password: req.Password})
 	if err != nil {
 		handlers.WriteError(w, http.StatusConflict, err.Error())
 		return
@@ -47,4 +47,47 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		"id":      id,
 		"message": "user registered successfully",
 	})
+}
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		handlers.WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	ctn, err := container.Instance(nil, nil)
+	if err != nil {
+		handlers.WriteError(w, http.StatusInternalServerError, "container init failed")
+		return
+	}
+
+	userv := ctn.Get(DIUserService).(Service)
+
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		handlers.WriteError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+
+	if req.Password == "" {
+		handlers.WriteError(w, http.StatusUnauthorized, "password cannot be empty")
+		return
+	}
+	if len(req.Email) < 6 {
+		handlers.WriteError(w, http.StatusUnauthorized, "email is too small")
+		return
+	}
+
+	token, err := userv.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		handlers.WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token": token,
+	})
+
 }
