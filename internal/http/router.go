@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	httpSwagger "github.com/swaggo/http-swagger"
 	"laschool.ru/event-booking-service/internal/http/handlers"
 	"laschool.ru/event-booking-service/internal/http/middleware"
 	"laschool.ru/event-booking-service/internal/user"
@@ -18,6 +19,14 @@ func NewRouter() *http.ServeMux {
 
 	mux.HandleFunc("/ping", handlers.PingHandler)
 	mux.HandleFunc("/health", handlers.HealthHandler)
+
+	// Swagger UI
+	// Serve swagger UI files under /swagger/
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
+	// Redirect /swagger to /swagger/index.html for convenience
+	mux.HandleFunc("/swagger", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/swagger/index.html", http.StatusMovedPermanently)
+	})
 
 	// Event CRUD
 	mux.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {

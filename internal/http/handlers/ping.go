@@ -10,11 +10,26 @@ import (
 	"laschool.ru/event-booking-service/internal/config"
 )
 
+// PingHandler godoc
+// @Summary      Проверка доступности
+// @Description  Возвращает pong, если сервис работает
+// @Tags         health
+// @Produce      plain
+// @Success      200  "pong"
+// @Router       /ping [get]
 func PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("pong"))
 }
 
+// HealthHandler godoc
+// @Summary      Проверка состояния сервиса
+// @Description  Проверяет состояние конфигурации и базы данных
+// @Tags         health
+// @Produce      plain
+// @Success      200  "ok"
+// @Failure      500  "config load failed | db open failed"
+// @Router       /health [get]
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	cfg, err := config.LoadConfig()
 	if err != nil {

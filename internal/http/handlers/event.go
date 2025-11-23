@@ -29,7 +29,16 @@ func parseIDFromPath(path string) (int64, bool) {
 	return id, true
 }
 
-// POST /events
+// CreateEvent godoc
+// @Summary      Создать событие
+// @Description  Создает новое событие
+// @Tags         events
+// @Accept       json
+// @Produce      json
+// @Param        event  body  event.Event  true  "Данные события"
+// @Success      201  {object}  event.Event
+// @Failure      400  {object}  handlers.ErrorResponse
+// @Router       /events [post]
 func CreateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -71,7 +80,17 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
 }
 
-// GET /events/{id}
+// GetEvent godoc
+// @Summary      Получить событие
+// @Description  Возвращает информацию о событии по ID
+// @Tags         events
+// @Produce      json
+// @Param        id   path      int  true  "ID события"
+// @Success      200  {object}  event.Event  "Пример успешного ответа"
+// @Failure      400  {object}  handlers.ErrorResponse  "Некорректный ID"
+// @Failure      404  {object}  handlers.ErrorResponse  "Событие не найдено"
+// @Failure      500  {object}  handlers.ErrorResponse  "Внутренняя ошибка сервера"
+// @Router       /events/{id} [get]
 func GetEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -97,7 +116,16 @@ func GetEvent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, e)
 }
 
-// GET /events
+// ListEvents godoc
+// @Summary      Список событий
+// @Description  Возвращает список событий
+// @Tags         events
+// @Produce      json
+// @Param        limit   query  int  false "Лимит записей"
+// @Param        offset  query  int  false "Смещение"
+// @Success      200  {array}  event.Event  "Пример успешного ответа"
+// @Failure      500  {object}  handlers.ErrorResponse  "Внутренняя ошибка сервера"
+// @Router       /events [get]
 func ListEvents(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -132,7 +160,18 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, list)
 }
 
-// PUT /events/{id}
+// UpdateEvent godoc
+// @Summary      Обновить событие
+// @Description  Обновляет данные события по ID
+// @Tags         events
+// @Accept       json
+// @Param        id     path   int  true  "ID события"
+// @Param        event  body   event.Event  true  "Данные события"
+// @Success      204  "Событие обновлено"
+// @Failure      400  {object}  handlers.ErrorResponse  "Некорректные данные"
+// @Failure      404  {object}  handlers.ErrorResponse  "Событие не найдено"
+// @Failure      500  {object}  handlers.ErrorResponse  "Внутренняя ошибка сервера"
+// @Router       /events/{id} [put]
 func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -180,7 +219,16 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// DELETE /events/{id}
+// DeleteEvent godoc
+// @Summary      Удалить событие
+// @Description  Удаляет событие по ID
+// @Tags         events
+// @Param        id   path      int  true  "ID события"
+// @Success      204  "Событие удалено"
+// @Failure      400  {object}  handlers.ErrorResponse  "Некорректный ID"
+// @Failure      404  {object}  handlers.ErrorResponse  "Событие не найдено"
+// @Failure      500  {object}  handlers.ErrorResponse  "Внутренняя ошибка сервера"
+// @Router       /events/{id} [delete]
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")

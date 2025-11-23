@@ -1,0 +1,346 @@
+basePath: /
+definitions:
+  booking.Booking:
+    properties:
+      created_at:
+        type: string
+      event_id:
+        type: integer
+      id:
+        type: integer
+      seats:
+        type: integer
+      status:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  event.Event:
+    properties:
+      capacity:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      ends_at:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      message: {}
+      status:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Сервис для управления событиями и бронированиями.
+  title: Event Booking Service API
+  version: "1.0"
+paths:
+  /bookings:
+    post:
+      consumes:
+      - application/json
+      description: Создает новое бронирование для события
+      parameters:
+      - description: Данные бронирования
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/booking.Booking'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/booking.Booking'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Создать бронирование
+      tags:
+      - bookings
+  /bookings/{id}:
+    delete:
+      description: Отменяет бронирование по ID
+      parameters:
+      - description: ID бронирования
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Бронирование отменено
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Бронирование не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Отменить бронирование
+      tags:
+      - bookings
+    get:
+      description: Возвращает информацию о бронировании по ID
+      parameters:
+      - description: ID бронирования
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            $ref: '#/definitions/booking.Booking'
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Бронирование не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Получить бронирование
+      tags:
+      - bookings
+  /events:
+    get:
+      description: Возвращает список событий
+      parameters:
+      - description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            items:
+              $ref: '#/definitions/event.Event'
+            type: array
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Список событий
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Создает новое событие
+      parameters:
+      - description: Данные события
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/event.Event'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/event.Event'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Создать событие
+      tags:
+      - events
+  /events/{id}:
+    delete:
+      description: Удаляет событие по ID
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Событие удалено
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Удалить событие
+      tags:
+      - events
+    get:
+      description: Возвращает информацию о событии по ID
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            $ref: '#/definitions/event.Event'
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Получить событие
+      tags:
+      - events
+    put:
+      consumes:
+      - application/json
+      description: Обновляет данные события по ID
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные события
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/event.Event'
+      responses:
+        "204":
+          description: Событие обновлено
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Обновить событие
+      tags:
+      - events
+  /events/{id}/bookings:
+    get:
+      description: Возвращает список бронирований для события
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            items:
+              $ref: '#/definitions/booking.Booking'
+            type: array
+        "400":
+          description: Некорректный ID события
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Список бронирований по событию
+      tags:
+      - bookings
+  /health:
+    get:
+      description: Проверяет состояние конфигурации и базы данных
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: ok
+        "500":
+          description: config load failed | db open failed
+      summary: Проверка состояния сервиса
+      tags:
+      - health
+  /ping:
+    get:
+      description: Возвращает pong, если сервис работает
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: pong
+      summary: Проверка доступности
+      tags:
+      - health
+schemes:
+- http
+swagger: "2.0"
