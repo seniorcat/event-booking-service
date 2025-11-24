@@ -21,6 +21,9 @@ import (
 // @BasePath        /
 // @schemes         http
 // @host            localhost:8080
+// @securityDefinitions.apikey  Bearer
+// @in header
+// @name Authorization
 func main() {
 	fmt.Println("Booking Service started...")
 

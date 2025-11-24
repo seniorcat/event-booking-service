@@ -15,6 +15,39 @@ definitions:
       user_id:
         type: integer
     type: object
+  booking.CreateBookingRequest:
+    properties:
+      event_id:
+        example: 1
+        type: integer
+      seats:
+        example: 2
+        type: integer
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  event.CreateEventRequest:
+    properties:
+      capacity:
+        example: 100
+        type: integer
+      description:
+        example: Live concert in the park
+        type: string
+      ends_at:
+        example: "2026-01-15T21:00:00Z"
+        type: string
+      location:
+        example: Central Park
+        type: string
+      starts_at:
+        example: "2026-01-15T18:00:00Z"
+        type: string
+      title:
+        example: 'Concert: The Rusty Cats'
+        type: string
+    type: object
   event.Event:
     properties:
       capacity:
@@ -42,6 +75,18 @@ definitions:
       status:
         type: integer
     type: object
+  user.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  user.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -60,7 +105,7 @@ paths:
         name: booking
         required: true
         schema:
-          $ref: '#/definitions/booking.Booking'
+          $ref: '#/definitions/booking.CreateBookingRequest'
       produces:
       - application/json
       responses:
@@ -72,6 +117,8 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
       summary: Создать бронирование
       tags:
       - bookings
@@ -99,6 +146,8 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
       summary: Отменить бронирование
       tags:
       - bookings
@@ -170,7 +219,7 @@ paths:
         name: event
         required: true
         schema:
-          $ref: '#/definitions/event.Event'
+          $ref: '#/definitions/event.CreateEventRequest'
       produces:
       - application/json
       responses:
@@ -182,6 +231,8 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
       summary: Создать событие
       tags:
       - events
@@ -209,6 +260,8 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
       summary: Удалить событие
       tags:
       - events
@@ -257,7 +310,7 @@ paths:
         name: event
         required: true
         schema:
-          $ref: '#/definitions/event.Event'
+          $ref: '#/definitions/event.CreateEventRequest'
       responses:
         "204":
           description: Событие обновлено
@@ -273,6 +326,8 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
       summary: Обновить событие
       tags:
       - events
@@ -341,6 +396,41 @@ paths:
       summary: Проверка доступности
       tags:
       - health
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет аутентификацию и возвращает JWT
+      parameters:
+      - description: Email и пароль
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/user.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Вход в систему
+      tags:
+      - users
 schemes:
 - http
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

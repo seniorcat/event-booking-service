@@ -21,9 +21,7 @@ func NewRouter() *http.ServeMux {
 	mux.HandleFunc("/health", handlers.HealthHandler)
 
 	// Swagger UI
-	// Serve swagger UI files under /swagger/
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
-	// Redirect /swagger to /swagger/index.html for convenience
 	mux.HandleFunc("/swagger", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/swagger/index.html", http.StatusMovedPermanently)
 	})

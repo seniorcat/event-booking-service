@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/bookings": {
             "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Создает новое бронирование для события",
                 "consumes": [
                     "application/json"
@@ -35,7 +40,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/booking.Booking"
+                            "$ref": "#/definitions/booking.CreateBookingRequest"
                         }
                     }
                 ],
@@ -102,6 +107,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Отменяет бронирование по ID",
                 "tags": [
                     "bookings"
@@ -184,6 +194,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Создает новое событие",
                 "consumes": [
                     "application/json"
@@ -202,7 +217,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/event.Event"
+                            "$ref": "#/definitions/event.CreateEventRequest"
                         }
                     }
                 ],
@@ -269,6 +284,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Обновляет данные события по ID",
                 "consumes": [
                     "application/json"
@@ -291,7 +311,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/event.Event"
+                            "$ref": "#/definitions/event.CreateEventRequest"
                         }
                     }
                 ],
@@ -320,6 +340,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Удаляет событие по ID",
                 "tags": [
                     "events"
@@ -457,6 +482,52 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/login": {
+            "post": {
+                "description": "Выполняет аутентификацию и возвращает JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Вход в систему",
+                "parameters": [
+                    {
+                        "description": "Email и пароль",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -480,6 +551,52 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "booking.CreateBookingRequest": {
+            "type": "object",
+            "properties": {
+                "event_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "seats": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "event.CreateEventRequest": {
+            "type": "object",
+            "properties": {
+                "capacity": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Live concert in the park"
+                },
+                "ends_at": {
+                    "type": "string",
+                    "example": "2026-01-15T21:00:00Z"
+                },
+                "location": {
+                    "type": "string",
+                    "example": "Central Park"
+                },
+                "starts_at": {
+                    "type": "string",
+                    "example": "2026-01-15T18:00:00Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Concert: The Rusty Cats"
                 }
             }
         },
@@ -523,6 +640,32 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "user.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

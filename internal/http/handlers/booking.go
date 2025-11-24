@@ -28,9 +28,10 @@ func parseID(path string) (int64, bool) {
 // @Summary      Создать бронирование
 // @Description  Создает новое бронирование для события
 // @Tags         bookings
+// @Security     Bearer
 // @Accept       json
 // @Produce      json
-// @Param        booking  body  booking.Booking  true  "Данные бронирования"
+// @Param        booking  body  booking.CreateBookingRequest  true  "Данные бронирования"
 // @Success      201  {object}  booking.Booking
 // @Failure      400  {object}  handlers.ErrorResponse
 // @Router       /bookings [post]
@@ -166,6 +167,7 @@ func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 // @Summary      Отменить бронирование
 // @Description  Отменяет бронирование по ID
 // @Tags         bookings
+// @Security     Bearer
 // @Param        id   path      int  true  "ID бронирования"
 // @Success      204  "Бронирование отменено"
 // @Failure      400  {object}  handlers.ErrorResponse  "Некорректный ID"

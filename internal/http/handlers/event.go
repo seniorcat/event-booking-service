@@ -33,9 +33,10 @@ func parseIDFromPath(path string) (int64, bool) {
 // @Summary      Создать событие
 // @Description  Создает новое событие
 // @Tags         events
+// @Security     Bearer
 // @Accept       json
 // @Produce      json
-// @Param        event  body  event.Event  true  "Данные события"
+// @Param        event  body  event.CreateEventRequest  true  "Данные события"
 // @Success      201  {object}  event.Event
 // @Failure      400  {object}  handlers.ErrorResponse
 // @Router       /events [post]
@@ -164,9 +165,10 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 // @Summary      Обновить событие
 // @Description  Обновляет данные события по ID
 // @Tags         events
+// @Security     Bearer
 // @Accept       json
 // @Param        id     path   int  true  "ID события"
-// @Param        event  body   event.Event  true  "Данные события"
+// @Param        event  body   event.CreateEventRequest  true  "Данные события"
 // @Success      204  "Событие обновлено"
 // @Failure      400  {object}  handlers.ErrorResponse  "Некорректные данные"
 // @Failure      404  {object}  handlers.ErrorResponse  "Событие не найдено"
@@ -223,6 +225,7 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 // @Summary      Удалить событие
 // @Description  Удаляет событие по ID
 // @Tags         events
+// @Security     Bearer
 // @Param        id   path      int  true  "ID события"
 // @Success      204  "Событие удалено"
 // @Failure      400  {object}  handlers.ErrorResponse  "Некорректный ID"
