@@ -49,6 +49,18 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// RegisterHandler godoc
+// @Summary      Регистрация пользователя
+// @Description  Регистрирует нового пользователя
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user  body  user.RegisterRequest  true  "Данные пользователя"
+// @Success      201  {object}  user.RegisterResponse
+// @Failure      400  {object}  handlers.ErrorResponse
+// @Failure      409  {object}  handlers.ErrorResponse
+// @Router       /users/register [post]
+
 // LoginHandler godoc
 // @Summary      Вход в систему
 // @Description  Выполняет аутентификацию и возвращает JWT

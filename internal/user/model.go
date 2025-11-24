@@ -20,3 +20,16 @@ type LoginRequest struct {
 type AuthResponse struct {
 	Token string `json:"token"`
 }
+
+// RegisterRequest модель запроса для регистрации пользователя
+type RegisterRequest struct {
+	Name     string `json:"name" example:"Alice"`
+	Email    string `json:"email" example:"alice@example.com"`
+	Password string `json:"password" example:"password123"`
+}
+
+// RegisterResponse модель ответа после успешной регистрации пользователя
+type RegisterResponse struct {
+	ID      int64  `json:"id" example:"1"`
+	Message string `json:"message" example:"user registered successfully"`
+}
