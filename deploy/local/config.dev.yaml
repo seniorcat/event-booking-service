@@ -9,3 +9,8 @@ database:
 jwt:
   secret: "my-super-secret-jwt-key-minimum-32-charsssss"
   ttl: 24h
+redis:
+  adr: "localhost:6379" # Адрес деплой
+  # adr: "redis.local.orb.local:6379" #Адрес для мака
+  pass: ""
+  DB: 0
