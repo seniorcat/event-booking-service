@@ -10,3 +10,10 @@ type Booking struct {
 	Status    string    `db:"status" json:"status"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
+
+// CreateBookingRequest модель запроса на создание бронирования
+type CreateBookingRequest struct {
+	EventID int64 `json:"event_id" example:"1"`
+	UserID  int64 `json:"user_id" example:"1"`
+	Seats   int   `json:"seats" example:"2"`
+}
