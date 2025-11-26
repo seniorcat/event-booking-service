@@ -3,14 +3,29 @@ server:
    read_timeout: 5s
    write_timeout: 5s
 database:
-  dsn: "postgres://user:password@localhost:5432/eventdb?sslmode=disable"
-  # dsn: "postgres://user:password@postgres.local.orb.local:5434/eventdb?sslmode=disable" #Строка для разработки на маке
+  # dsn: "postgres://user:password@localhost:5432/eventdb?sslmode=disable"
+  dsn: "postgres://user:password@postgres.local.orb.local:5434/eventdb?sslmode=disable" #Строка для разработки на маке
   auto_migrate: true
 jwt:
   secret: "my-super-secret-jwt-key-minimum-32-charsssss"
   ttl: 24h
 redis:
-  adr: "localhost:6379" # Адрес деплой
-  # adr: "redis.local.orb.local:6379" #Адрес для мака
-  pass: ""
-  DB: 0
+  # addr: "localhost:6379" # Адрес деплой
+  addr:: "redis.local.orb.local:6379" #Адрес для мака
+  password: ""
+  rdb: 0
+  # Таймауты
+  dial_timeout: 5      # 5s на установку соединения
+  read_timeout: 3      # 3s на чтение ответа
+  write_timeout: 3     # 3s на отправку команды
+  pool_timeout: 1      # 1s на ожидание свободного соединения
+  # Retry настройки
+  max_retries: 3       # 3 попытки при ошибках
+  min_retry_backoff: 1 # Минимальная задержка 1s
+  max_retry_backoff: 5 # Максимальная задержка 5s
+  # Пул соединений
+  pool_size: 20        # Максимум 20 одновременных соединений
+  min_idle_conns: 5    # Всегда 5 готовых соединений
+  # Время жизни соединений
+  conn_max_idle_time: 300  # 5 минут простоя
+  conn_max_lifetime: 3600  # 1 час максимальной жизни
