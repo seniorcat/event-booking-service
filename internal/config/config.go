@@ -42,6 +42,8 @@ type Redis struct {
 
 	ConnMaxIdleTime int `yaml:"conn_max_idle_time"`
 	ConnMaxLifetime int `yaml:"conn_max_lifetime"`
+
+	LockTTL int `yaml:"lock_ttl"`
 }
 
 type Config struct {
