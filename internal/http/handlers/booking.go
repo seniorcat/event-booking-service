@@ -1,12 +1,17 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"laschool.ru/event-booking-service/internal/booking"
+	"laschool.ru/event-booking-service/internal/cache"
 	"laschool.ru/event-booking-service/internal/event"
 	"laschool.ru/event-booking-service/pkg/container"
 )
@@ -47,6 +52,7 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
 	esvc := ctn.Get(event.DIEventService).(event.Service)
+	cachesrv := ctn.Get(cache.DICacheService).(cache.Service)
 
 	var req struct {
 		EventID int64 `json:"event_id"`
@@ -64,11 +70,38 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := bsvc.Create(r.Context(), &booking.Booking{EventID: req.EventID, UserID: req.UserID, Seats: req.Seats}, e.Capacity)
+	newBooking := &booking.Booking{
+		EventID:   req.EventID,
+		UserID:    req.UserID,
+		Seats:     req.Seats,
+		Status:    "confirmed",
+		CreatedAt: time.Now(),
+	}
+	id, err := bsvc.Create(r.Context(), newBooking, e.Capacity)
 	if err != nil {
 		WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		// Удаляем кэш для этого события
+		pattern := fmt.Sprintf("event:%d:bookings*", req.EventID)
+		if err := cachesrv.DeletePattern(ctx, pattern); err != nil {
+			log.Printf("WARNING: Cache invalidation failed for event %d: %v", req.EventID, err)
+		} else {
+			log.Printf("Cache invalidated for event %d after booking creation", req.EventID)
+		}
+
+		bookingKey := fmt.Sprintf("booking:%d", id)
+		if err := cachesrv.Set(ctx, bookingKey, newBooking, 30*time.Minute); err != nil {
+			log.Printf("WARNING: Failed to cache booking %d: %v", id, err)
+		} else {
+			log.Printf("Booking %d cached successfully", id)
+		}
+	}()
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
 }
 
@@ -142,6 +175,7 @@ func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
+	cacheService := ctn.Get(cache.DICacheService).(cache.Service)
 
 	limit, offset := 20, 0
 	if v := r.URL.Query().Get("limit"); v != "" {
@@ -155,12 +189,37 @@ func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	list, err := bsvc.ListByEvent(r.Context(), eventID, limit, offset)
+	if r.URL.Query().Get("refresh") == "true" {
+		// Удаляем ТОЛЬКО бронирования этого события
+		pattern := fmt.Sprintf("event:%d:bookings:*", eventID)
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+
+		if err := cacheService.DeletePattern(ctx, pattern); err != nil {
+			log.Printf("Cache invalidation failed for event %d: %v", eventID, err)
+			// Не возвращаем ошибку клиенту - продолжаем работу
+		} else {
+			log.Printf("Cache invalidated for event %d bookings (manual refresh)", eventID)
+		}
+	}
+
+	cacheKey := fmt.Sprintf("event:%d:bookings:limit:%d:offset:%d", eventID, limit, offset)
+
+	calculateFunc := func() (interface{}, error) {
+		return bsvc.ListByEvent(r.Context(), eventID, limit, offset)
+	}
+
+	data, err := cacheService.GetProtected(r.Context(), cacheKey, calculateFunc, 5*time.Minute)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "failed to list bookings")
 		return
 	}
-	writeJSON(w, http.StatusOK, list)
+	var bookings []booking.Booking
+	if err := json.Unmarshal(data, &bookings); err != nil {
+		WriteError(w, http.StatusInternalServerError, "failed to parse cached data")
+		return
+	}
+	writeJSON(w, http.StatusOK, bookings)
 }
 
 // CancelBooking godoc
@@ -190,9 +249,20 @@ func CancelBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
+	cacheService := ctn.Get(cache.DICacheService).(cache.Service)
+
 	if err := bsvc.Cancel(r.Context(), id); err != nil {
 		WriteError(w, http.StatusInternalServerError, "failed to cancel booking")
 		return
 	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		// Удаляем все связанное с бронированиями
+		cacheService.DeletePattern(ctx, "event:*:bookings*")
+		cacheService.DeletePattern(ctx, fmt.Sprintf("booking:%d", id))
+		cacheService.DeletePattern(ctx, "stats:bookings*")
+	}()
 	w.WriteHeader(http.StatusNoContent)
 }

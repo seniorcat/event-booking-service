@@ -3,15 +3,15 @@ server:
    read_timeout: 5s
    write_timeout: 5s
 database:
-  # dsn: "postgres://user:password@localhost:5432/eventdb?sslmode=disable"
-  dsn: "postgres://user:password@postgres.local.orb.local:5434/eventdb?sslmode=disable" #Строка для разработки на маке
+  dsn: "postgres://user:password@localhost:5432/eventdb?sslmode=disable"
+  # dsn: "postgres://user:password@postgres.local.orb.local:5434/eventdb?sslmode=disable" #Строка для разработки на маке
   auto_migrate: true
 jwt:
   secret: "my-super-secret-jwt-key-minimum-32-charsssss"
   ttl: 24h
 redis:
-  # addr: "localhost:6379" # Адрес деплой
-  addr:: "redis.local.orb.local:6379" #Адрес для мака
+  addr: "localhost:6379" # Адрес деплой
+  # addr:: "redis.local.orb.local:6379" #Адрес для мака
   password: ""
   rdb: 0
   # Таймауты

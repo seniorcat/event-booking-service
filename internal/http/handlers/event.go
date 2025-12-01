@@ -1,12 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"laschool.ru/event-booking-service/internal/cache"
 	"laschool.ru/event-booking-service/internal/event"
 	"laschool.ru/event-booking-service/pkg/container"
 )
@@ -52,6 +56,7 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
+	cacheService := ctn.Get(cache.DICacheService).(cache.Service)
 
 	var req struct {
 		Title       string    `json:"title"`
@@ -66,18 +71,30 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := svc.Create(r.Context(), &event.Event{
-		Title:       req.Title,
+	newEvent := &event.Event{Title: req.Title,
 		Description: req.Description,
 		Location:    req.Location,
 		StartsAt:    req.StartsAt,
 		EndsAt:      req.EndsAt,
-		Capacity:    req.Capacity,
-	})
+		Capacity:    req.Capacity}
+
+	id, err := svc.Create(r.Context(), newEvent)
 	if err != nil {
 		WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		eventKey := fmt.Sprintf("event:%d", id)
+		if err := cacheService.Set(ctx, eventKey, newEvent, 30*time.Minute); err != nil {
+			log.Printf("WARNING: Failed to cache event %d: %v", id, err)
+		} else {
+			log.Printf("Event %d cached successfully", id)
+		}
+	}()
+
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
 }
 
@@ -138,6 +155,7 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
+	cacheService := ctn.Get(cache.DICacheService).(cache.Service)
 
 	// простые параметры пагинации из query
 	limit := 20
@@ -153,12 +171,34 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	list, err := svc.List(r.Context(), limit, offset)
+	// Принудительное обновление кэша
+	if r.URL.Query().Get("refresh") == "true" {
+		// Удаляем все кэшированные списки событий
+		if err := cacheService.DeletePattern(r.Context(), "events:*"); err != nil {
+			log.Printf("Cache invalidation failed: %v", err)
+		} else {
+			log.Printf("Events cache invalidated")
+		}
+	}
+
+	cacheKey := fmt.Sprintf("events:list:limit:%d:offset:%d", limit, offset)
+	calculateFunc := func() (interface{}, error) {
+		return svc.List(r.Context(), limit, offset)
+	}
+
+	data, err := cacheService.GetProtected(r.Context(), cacheKey, calculateFunc, 5*time.Minute)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "failed to list events")
 		return
 	}
-	writeJSON(w, http.StatusOK, list)
+
+	var events []event.Event
+	if err := json.Unmarshal(data, &events); err != nil {
+		WriteError(w, http.StatusInternalServerError, "failed to parse cached data")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, events)
 }
 
 // UpdateEvent godoc
@@ -190,6 +230,7 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
+	cacheService := ctn.Get(cache.DICacheService).(cache.Service)
 
 	var req struct {
 		Title       string    `json:"title"`
@@ -204,7 +245,7 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = svc.Update(r.Context(), &event.Event{
+	updatedEvent := &event.Event{
 		ID:          id,
 		Title:       req.Title,
 		Description: req.Description,
@@ -213,11 +254,26 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		EndsAt:      req.EndsAt,
 		Capacity:    req.Capacity,
 		UpdatedAt:   time.Now(),
-	})
+	}
+
+	err = svc.Update(r.Context(), updatedEvent)
 	if err != nil {
 		WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		// 1. Обновляем событие
+		eventKey := fmt.Sprintf("event:%d", id)
+		cacheService.Set(ctx, eventKey, updatedEvent, 30*time.Minute)
+
+		// 2. Инвалидируем списки
+		cacheService.DeletePattern(ctx, "events:list*")
+
+		log.Printf("Event %d cache updated", id)
+	}()
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -248,10 +304,22 @@ func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
+	cacheService := ctn.Get(cache.DICacheService).(cache.Service)
 
 	if err := svc.Delete(r.Context(), id); err != nil {
 		WriteError(w, http.StatusInternalServerError, "failed to delete event")
 		return
 	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		cacheKey := fmt.Sprintf("event:%d", id)
+		cacheService.Delete(ctx, cacheKey)
+		cacheService.DeletePattern(ctx, "events:list*")
+
+		log.Printf("Event %d cache updated", id)
+	}()
 	w.WriteHeader(http.StatusNoContent)
 }
