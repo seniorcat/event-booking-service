@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
+	_ "laschool.ru/event-booking-service/docs"
 	"laschool.ru/event-booking-service/internal/config"
 	"laschool.ru/event-booking-service/internal/db"
 	httprouter "laschool.ru/event-booking-service/internal/http"
@@ -14,6 +15,15 @@ import (
 	di "laschool.ru/event-booking-service/pkg/container"
 )
 
+// @title           Event Booking Service API
+// @version         1.0
+// @description     Сервис для управления событиями и бронированиями.
+// @BasePath        /
+// @schemes         http
+// @host            localhost:8080
+// @securityDefinitions.apikey  Bearer
+// @in header
+// @name Authorization
 func main() {
 	fmt.Println("Booking Service started...")
 

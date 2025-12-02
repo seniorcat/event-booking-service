@@ -24,6 +24,17 @@ func parseID(path string) (int64, bool) {
 }
 
 // POST /bookings
+// CreateBooking godoc
+// @Summary      Создать бронирование
+// @Description  Создает новое бронирование для события
+// @Tags         bookings
+// @Security     Bearer
+// @Accept       json
+// @Produce      json
+// @Param        booking  body  booking.CreateBookingRequest  true  "Данные бронирования"
+// @Success      201  {object}  map[string]int64  "id of created booking"
+// @Failure      400  {object}  handlers.ErrorResponse
+// @Router       /bookings [post]
 func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -37,11 +48,8 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
 	esvc := ctn.Get(event.DIEventService).(event.Service)
 
-	var req struct {
-		EventID int64 `json:"event_id"`
-		UserID  int64 `json:"user_id"`
-		Seats   int   `json:"seats"`
-	}
+	var req booking.CreateBookingRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteError(w, http.StatusBadRequest, "invalid json")
 		return
@@ -61,7 +69,17 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
 }
 
-// GET /bookings/{id}
+// GetBooking godoc
+// @Summary      Получить бронирование
+// @Description  Возвращает информацию о бронировании по ID
+// @Tags         bookings
+// @Produce      json
+// @Param        id   path      int  true  "ID бронирования"
+// @Success      200  {object}  booking.Booking  "Пример успешного ответа"
+// @Failure      400  {object}  handlers.ErrorResponse  "Некорректный ID"
+// @Failure      404  {object}  handlers.ErrorResponse  "Бронирование не найдено"
+// @Failure      500  {object}  handlers.ErrorResponse  "Внутренняя ошибка сервера"
+// @Router       /bookings/{id} [get]
 func GetBooking(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -86,7 +104,19 @@ func GetBooking(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, b)
 }
 
-// GET /events/{id}/bookings
+// ListBookingsByEvent godoc
+// @Summary      Список бронирований по событию
+// @Description  Возвращает список бронирований для события
+// @Tags         bookings
+// @Produce      json
+// @Param        id      path   int  true  "ID события"
+// @Param        limit   query  int  false "Лимит записей"
+// @Param        offset  query  int  false "Смещение"
+// @Success      200  {array}  booking.Booking  "Пример успешного ответа"
+// @Failure      400  {object}  handlers.ErrorResponse  "Некорректный ID события"
+// @Failure      404  {object}  handlers.ErrorResponse  "Событие не найдено"
+// @Failure      500  {object}  handlers.ErrorResponse  "Внутренняя ошибка сервера"
+// @Router       /events/{id}/bookings [get]
 func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -130,7 +160,17 @@ func ListBookingsByEvent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, list)
 }
 
-// DELETE /bookings/{id}
+// CancelBooking godoc
+// @Summary      Отменить бронирование
+// @Description  Отменяет бронирование по ID
+// @Tags         bookings
+// @Security     Bearer
+// @Param        id   path      int  true  "ID бронирования"
+// @Success      204  "Бронирование отменено"
+// @Failure      400  {object}  handlers.ErrorResponse  "Некорректный ID"
+// @Failure      404  {object}  handlers.ErrorResponse  "Бронирование не найдено"
+// @Failure      500  {object}  handlers.ErrorResponse  "Внутренняя ошибка сервера"
+// @Router       /bookings/{id} [delete]
 func CancelBooking(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		WriteError(w, http.StatusMethodNotAllowed, "method not allowed")

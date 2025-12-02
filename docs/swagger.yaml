@@ -1,0 +1,481 @@
+basePath: /
+definitions:
+  booking.Booking:
+    properties:
+      created_at:
+        type: string
+      event_id:
+        type: integer
+      id:
+        type: integer
+      seats:
+        type: integer
+      status:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  booking.CreateBookingRequest:
+    properties:
+      event_id:
+        example: 1
+        type: integer
+      seats:
+        example: 2
+        type: integer
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  event.CreateEventRequest:
+    properties:
+      capacity:
+        example: 100
+        type: integer
+      description:
+        example: Live concert in the park
+        type: string
+      ends_at:
+        example: "2026-01-15T21:00:00Z"
+        type: string
+      location:
+        example: Central Park
+        type: string
+      starts_at:
+        example: "2026-01-15T18:00:00Z"
+        type: string
+      title:
+        example: 'Concert: The Rusty Cats'
+        type: string
+    type: object
+  event.Event:
+    properties:
+      capacity:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      ends_at:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      message: {}
+      status:
+        type: integer
+    type: object
+  user.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  user.RegisterRequest:
+    properties:
+      email:
+        example: alice@example.com
+        type: string
+      name:
+        example: Alice
+        type: string
+      password:
+        example: password123
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Сервис для управления событиями и бронированиями.
+  title: Event Booking Service API
+  version: "1.0"
+paths:
+  /bookings:
+    post:
+      consumes:
+      - application/json
+      description: Создает новое бронирование для события
+      parameters:
+      - description: Данные бронирования
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/booking.CreateBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: id of created booking
+          schema:
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Создать бронирование
+      tags:
+      - bookings
+  /bookings/{id}:
+    delete:
+      description: Отменяет бронирование по ID
+      parameters:
+      - description: ID бронирования
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Бронирование отменено
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Бронирование не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Отменить бронирование
+      tags:
+      - bookings
+    get:
+      description: Возвращает информацию о бронировании по ID
+      parameters:
+      - description: ID бронирования
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            $ref: '#/definitions/booking.Booking'
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Бронирование не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Получить бронирование
+      tags:
+      - bookings
+  /events:
+    get:
+      description: Возвращает список событий
+      parameters:
+      - description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            items:
+              $ref: '#/definitions/event.Event'
+            type: array
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Список событий
+      tags:
+      - events
+    post:
+      consumes:
+      - application/json
+      description: Создает новое событие
+      parameters:
+      - description: Данные события
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/event.CreateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: id of created event
+          schema:
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Создать событие
+      tags:
+      - events
+  /events/{id}:
+    delete:
+      description: Удаляет событие по ID
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Событие удалено
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Удалить событие
+      tags:
+      - events
+    get:
+      description: Возвращает информацию о событии по ID
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            $ref: '#/definitions/event.Event'
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Получить событие
+      tags:
+      - events
+    put:
+      consumes:
+      - application/json
+      description: Обновляет данные события по ID
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные события
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/event.CreateEventRequest'
+      responses:
+        "204":
+          description: Событие обновлено
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Обновить событие
+      tags:
+      - events
+  /events/{id}/bookings:
+    get:
+      description: Возвращает список бронирований для события
+      parameters:
+      - description: ID события
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Лимит записей
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пример успешного ответа
+          schema:
+            items:
+              $ref: '#/definitions/booking.Booking'
+            type: array
+        "400":
+          description: Некорректный ID события
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Событие не найдено
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Список бронирований по событию
+      tags:
+      - bookings
+  /health:
+    get:
+      description: Проверяет состояние конфигурации и базы данных
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: ok
+        "503":
+          description: config load failed | db open failed
+      summary: Проверка состояния сервиса
+      tags:
+      - health
+  /ping:
+    get:
+      description: Возвращает pong, если сервис работает
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: pong
+      summary: Проверка доступности
+      tags:
+      - health
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет аутентификацию и возвращает JWT
+      parameters:
+      - description: Email и пароль
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/user.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: id и token
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Вход в систему
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: id
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Регистрация пользователя
+      tags:
+      - users
+schemes:
+- http
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
