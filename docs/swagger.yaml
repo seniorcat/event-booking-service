@@ -75,16 +75,23 @@ definitions:
       status:
         type: integer
     type: object
-  user.AuthResponse:
-    properties:
-      token:
-        type: string
-    type: object
   user.LoginRequest:
     properties:
       email:
         type: string
       password:
+        type: string
+    type: object
+  user.RegisterRequest:
+    properties:
+      email:
+        example: alice@example.com
+        type: string
+      name:
+        example: Alice
+        type: string
+      password:
+        example: password123
         type: string
     type: object
 host: localhost:8080
@@ -110,9 +117,12 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: id of created booking
           schema:
-            $ref: '#/definitions/booking.Booking'
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
         "400":
           description: Bad Request
           schema:
@@ -224,9 +234,12 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: id of created event
           schema:
-            $ref: '#/definitions/event.Event'
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
         "400":
           description: Bad Request
           schema:
@@ -380,7 +393,7 @@ paths:
       responses:
         "200":
           description: ok
-        "500":
+        "503":
           description: config load failed | db open failed
       summary: Проверка состояния сервиса
       tags:
@@ -412,9 +425,10 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: id и token
           schema:
-            $ref: '#/definitions/user.AuthResponse'
+            additionalProperties: true
+            type: object
         "400":
           description: Bad Request
           schema:
@@ -424,6 +438,37 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Вход в систему
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: id
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Регистрация пользователя
       tags:
       - users
 schemes:
