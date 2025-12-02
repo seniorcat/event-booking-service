@@ -17,6 +17,13 @@ import (
 // @Produce      plain
 // @Success      200  "pong"
 // @Router       /ping [get]
+// PingHandler godoc
+// @Summary      Проверка доступности
+// @Description  Возвращает pong, если сервис работает
+// @Tags         health
+// @Produce      plain
+// @Success      200  "pong"
+// @Router       /ping [get]
 func PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("pong"))

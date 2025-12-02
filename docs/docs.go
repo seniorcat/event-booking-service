@@ -247,15 +247,24 @@ const docTemplate = `{
         },
         "/events/{id}": {
             "get": {
-                "description": "Возвращает информацию о событии по ID",
+                "description": "Возвращает информацию о событии по ID\nВозвращает информацию о событии по ID",
                 "produces": [
+                    "application/json",
                     "application/json"
                 ],
                 "tags": [
+                    "events",
                     "events"
                 ],
                 "summary": "Получить событие",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID события",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "ID события",
@@ -476,11 +485,13 @@ const docTemplate = `{
         },
         "/ping": {
             "get": {
-                "description": "Возвращает pong, если сервис работает",
+                "description": "Возвращает pong, если сервис работает\nВозвращает pong, если сервис работает",
                 "produces": [
+                    "text/plain",
                     "text/plain"
                 ],
                 "tags": [
+                    "health",
                     "health"
                 ],
                 "summary": "Проверка доступности",

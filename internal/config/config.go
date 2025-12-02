@@ -23,10 +23,34 @@ type JWT struct {
 	TTL    time.Duration `yaml:"ttl"`
 }
 
+type Redis struct {
+	Address  string `yaml:"addr"`
+	Password string `yaml:"password"`
+	DB       int    `yaml:"rdb"`
+
+	DialTimeout  int `yaml:"dial_timeout"`
+	ReadTimeout  int `yaml:"read_timeout"`
+	WriteTimeout int `yaml:"write_timeout"`
+	PoolTimeout  int `yaml:"pool_timeout"`
+
+	MaxRetries      int `yaml:"max_retries"`
+	MinRetryBackoff int `yaml:"min_retry_backoff"`
+	MaxRetryBackoff int `yaml:"max_retry_backoff"`
+
+	PoolSize     int `yaml:"pool_size"`
+	MinIdleConns int `yaml:"min_idle_conns"`
+
+	ConnMaxIdleTime int `yaml:"conn_max_idle_time"`
+	ConnMaxLifetime int `yaml:"conn_max_lifetime"`
+
+	LockTTL int `yaml:"lock_ttl"`
+}
+
 type Config struct {
 	Server   Server   `yaml:"server"`
 	Database Database `yaml:"database"`
 	JWT      JWT      `yaml:"jwt"`
+	Redis    Redis    `yaml:"redis"`
 }
 
 func Load(path string) (*Config, error) {
