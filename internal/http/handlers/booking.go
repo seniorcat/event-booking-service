@@ -32,7 +32,7 @@ func parseID(path string) (int64, bool) {
 // @Accept       json
 // @Produce      json
 // @Param        booking  body  booking.CreateBookingRequest  true  "Данные бронирования"
-// @Success      201  {object}  booking.Booking
+// @Success      201  {object}  map[string]int64  "id of created booking"
 // @Failure      400  {object}  handlers.ErrorResponse
 // @Router       /bookings [post]
 func CreateBooking(w http.ResponseWriter, r *http.Request) {
@@ -48,11 +48,8 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	bsvc := ctn.Get(booking.DIBookingService).(booking.Service)
 	esvc := ctn.Get(event.DIEventService).(event.Service)
 
-	var req struct {
-		EventID int64 `json:"event_id"`
-		UserID  int64 `json:"user_id"`
-		Seats   int   `json:"seats"`
-	}
+	var req booking.CreateBookingRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteError(w, http.StatusBadRequest, "invalid json")
 		return

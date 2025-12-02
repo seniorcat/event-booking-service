@@ -28,12 +28,12 @@ func PingHandler(w http.ResponseWriter, r *http.Request) {
 // @Tags         health
 // @Produce      plain
 // @Success      200  "ok"
-// @Failure      500  "config load failed | db open failed"
+// @Failure      503  "config load failed | db open failed"
 // @Router       /health [get]
 func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		http.Error(w, "config load failed", http.StatusInternalServerError)
+		http.Error(w, "config load failed", http.StatusServiceUnavailable)
 		return
 	}
 	database, err := sqlx.Open("pgx", cfg.Database.DSN)

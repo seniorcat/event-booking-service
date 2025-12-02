@@ -37,7 +37,7 @@ func parseIDFromPath(path string) (int64, bool) {
 // @Accept       json
 // @Produce      json
 // @Param        event  body  event.CreateEventRequest  true  "Данные события"
-// @Success      201  {object}  event.Event
+// @Success      201  {object}  map[string]int64  "id of created event"
 // @Failure      400  {object}  handlers.ErrorResponse
 // @Router       /events [post]
 func CreateEvent(w http.ResponseWriter, r *http.Request) {
@@ -53,14 +53,8 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	svc := ctn.Get(event.DIEventService).(event.Service)
 
-	var req struct {
-		Title       string    `json:"title"`
-		Description string    `json:"description"`
-		Location    string    `json:"location"`
-		StartsAt    time.Time `json:"starts_at"`
-		EndsAt      time.Time `json:"ends_at"`
-		Capacity    int       `json:"capacity"`
-	}
+	var req event.CreateEventRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteError(w, http.StatusBadRequest, "invalid json")
 		return
