@@ -66,3 +66,55 @@ func TestGetProtected_CacheNo_Calculates(t *testing.T) {
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestDeletePattern(t *testing.T) {
+	client, mock := redismock.NewClientMock()
+	defer client.Close()
+	s := cache.NewService(client, 100*time.Millisecond)
+	ctx := context.Background()
+
+	pattern := "test:pattern:*"
+	keys := []string{"test:pattern:1", "test:pattern:2"}
+
+	// Scan returns keys and cursor 0
+	mock.ExpectScan(0, pattern, 100).SetVal(keys, 0)
+	mock.ExpectDel(keys...).SetVal(int64(len(keys)))
+
+	err := s.DeletePattern(ctx, pattern)
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestDeletePattern_MultiBatch(t *testing.T) {
+	client, mock := redismock.NewClientMock()
+	defer client.Close()
+	s := cache.NewService(client, 100*time.Millisecond)
+	ctx := context.Background()
+
+	pattern := "test:pattern:*"
+	batch1 := []string{"test:pattern:1", "test:pattern:2"}
+	batch2 := []string{"test:pattern:3"}
+
+	mock.ExpectScan(0, pattern, 100).SetVal(batch1, 1)
+	mock.ExpectScan(1, pattern, 100).SetVal(batch2, 0)
+
+	all := append(batch1, batch2...)
+	mock.ExpectDel(all...).SetVal(int64(len(all)))
+
+	err := s.DeletePattern(ctx, pattern)
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestWithJitter(t *testing.T) {
+	client, _ := redismock.NewClientMock()
+	defer client.Close()
+	s := cache.NewService(client, time.Second)
+
+	base := 1 * time.Second
+	jittered := s.WithJitter(base)
+	require.GreaterOrEqual(t, jittered, time.Second,
+		"WithJitter should guarantee minimum 1 second")
+	require.LessOrEqual(t, jittered, base+base/10,
+		"WithJitter should not exceed base + 10%")
+}
