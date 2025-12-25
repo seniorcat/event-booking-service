@@ -15,6 +15,7 @@ import (
 )
 
 var svc cache.Service
+var rdb redis.Client
 
 func TestMain(m *testing.M) {
 	configFile := filepath.Join("..", "..", "int-tests", "config.test.yaml")
@@ -81,4 +82,27 @@ func TestIntegration_SetGetDelete(t *testing.T) {
 	found, err = svc.Get(ctx, key, &newGot)
 	require.NoError(t, err)
 	require.False(t, found)
+}
+
+func TestIntegration_DeletePattern(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	keys := []string{
+		"test:key1",
+		"test:key2",
+		"test:key3",
+		"test:key1:var1",
+		"other:key1",
+		"other:key2",
+	}
+	for _, key := range keys {
+		err := rdb.Set(ctx, key, "value", 0).Err()
+		require.NoError(t, err, "failed to set test key")
+	}
+	for _, key := range keys {
+		exist, err := rdb.Exists(ctx, key).Result()
+		require.NoError(t, err, "failed to check exist")
+		require.Equal(t, int64(1), exist, "Key should exist before deletion")
+
+	}
 }
