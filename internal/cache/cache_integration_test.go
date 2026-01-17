@@ -15,7 +15,7 @@ import (
 )
 
 var svc cache.Service
-var rdb redis.Client
+var rdb *redis.Client
 
 func TestMain(m *testing.M) {
 	configFile := filepath.Join("..", "..", "int-tests", "config.test.yaml")
@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
-	rdb := redis.NewClient(&redis.Options{
+	rdb = redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Address,
 		Password: cfg.Redis.Password,
 		DB:       cfg.Redis.DB,
@@ -95,14 +95,52 @@ func TestIntegration_DeletePattern(t *testing.T) {
 		"other:key1",
 		"other:key2",
 	}
+	// Устанавливаем ключи
 	for _, key := range keys {
 		err := rdb.Set(ctx, key, "value", 0).Err()
 		require.NoError(t, err, "failed to set test key")
 	}
+
+	// Проверяем, что ключи существуют
 	for _, key := range keys {
 		exist, err := rdb.Exists(ctx, key).Result()
 		require.NoError(t, err, "failed to check exist")
 		require.Equal(t, int64(1), exist, "Key should exist before deletion")
+	}
 
+	// Удаляем ключи по паттерну
+	err := svc.DeletePattern(ctx, "test:*")
+	require.NoError(t, err, "failed to delete pattern")
+
+	// Проверяем результаты удаления
+	for i, key := range keys {
+		exist, err := rdb.Exists(ctx, key).Result()
+		require.NoError(t, err, "failed to check exist after deletion")
+
+		if i < 4 { // "test:key1", "test:key2", "test:key3", "test:key1:var1"
+			require.Equal(t, int64(0), exist, "Key %s should be deleted", key)
+		} else { // "other:key1", "other:key2"
+			require.Equal(t, int64(1), exist, "Key %s should NOT be deleted", key)
+		}
 	}
 }
+
+// func TestIntegration_GetProtected(t *testing.T) {
+// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+// 	defer cancel()
+// 	keys := []string{
+// 		"test:key1",
+// 		"test:key2",
+// 		"test:key3",
+// 	}
+// 	for _, key := range keys {
+// 		err := rdb.Set(ctx, key, "value", 0).Err()
+// 		require.NoError(t, err, "failed to set test key")
+// 	}
+// 	for _, key := range keys {
+// 		exist, err := rdb.Exists(ctx, key).Result()
+// 		require.NoError(t, err, "failed to check exist")
+// 		require.Equal(t, int64(1), exist, "Key should exist before deletion")
+
+// 	}
+// }
