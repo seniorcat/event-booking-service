@@ -2,6 +2,7 @@ package cache_test
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -100,23 +101,19 @@ func TestIntegration_DeletePattern(t *testing.T) {
 		err := rdb.Set(ctx, key, "value", 0).Err()
 		require.NoError(t, err, "failed to set test key")
 	}
-
 	// Проверяем, что ключи существуют
 	for _, key := range keys {
 		exist, err := rdb.Exists(ctx, key).Result()
 		require.NoError(t, err, "failed to check exist")
 		require.Equal(t, int64(1), exist, "Key should exist before deletion")
 	}
-
 	// Удаляем ключи по паттерну
 	err := svc.DeletePattern(ctx, "test:*")
 	require.NoError(t, err, "failed to delete pattern")
-
 	// Проверяем результаты удаления
 	for i, key := range keys {
 		exist, err := rdb.Exists(ctx, key).Result()
 		require.NoError(t, err, "failed to check exist after deletion")
-
 		if i < 4 { // "test:key1", "test:key2", "test:key3", "test:key1:var1"
 			require.Equal(t, int64(0), exist, "Key %s should be deleted", key)
 		} else { // "other:key1", "other:key2"
@@ -125,22 +122,29 @@ func TestIntegration_DeletePattern(t *testing.T) {
 	}
 }
 
-// func TestIntegration_GetProtected(t *testing.T) {
-// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-// 	defer cancel()
-// 	keys := []string{
-// 		"test:key1",
-// 		"test:key2",
-// 		"test:key3",
-// 	}
-// 	for _, key := range keys {
-// 		err := rdb.Set(ctx, key, "value", 0).Err()
-// 		require.NoError(t, err, "failed to set test key")
-// 	}
-// 	for _, key := range keys {
-// 		exist, err := rdb.Exists(ctx, key).Result()
-// 		require.NoError(t, err, "failed to check exist")
-// 		require.Equal(t, int64(1), exist, "Key should exist before deletion")
-
-// 	}
-// }
+func TestIntegration_GetProtected(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	key := "it:" + t.Name()
+	t.Cleanup(func() { _ = svc.Delete(context.Background(), key) })
+	
+	// Тестируем кэш промах - функция calculate вызывается и сохраняется результат
+	value := "protected value"
+	calculateFunc := func() (any, error) {
+		return value, nil
+	}
+	
+	valFromFuncTest, err := svc.GetProtected(ctx, key, calculateFunc, time.Minute)
+	require.NoError(t, err, "failed to call GetProtected for cache miss")
+	
+	expectedData, err := json.Marshal(value)
+	require.NoError(t, err, "failed to marshal expected value")
+	require.Equal(t, expectedData, valFromFuncTest, "expected and actual are not equal")
+	
+	// Проверяем, что значение действительно сохранено в кэше
+	var cached string
+	found, err := svc.Get(ctx, key, &cached)
+	require.NoError(t, err, "failed to get cached value")
+	require.True(t, found, "value should be cached")
+	require.Equal(t, value, cached, "cached value should match original")
+}
