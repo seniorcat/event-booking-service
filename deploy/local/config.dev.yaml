@@ -3,7 +3,7 @@ server:
    read_timeout: 5s
    write_timeout: 5s
 database:
-  dsn: "postgres://user:password@localhost:5432/eventdb?sslmode=disable"
+  dsn: "postgres://user:password@localhost:5434/eventdb?sslmode=disable"
   # dsn: "postgres://user:password@postgres.local.orb.local:5434/eventdb?sslmode=disable" #Строка для разработки на маке
   auto_migrate: true
 jwt:
