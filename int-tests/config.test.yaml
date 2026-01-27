@@ -6,7 +6,7 @@ database:
   dsn: "postgres://user:password@localhost:5432/eventdb_test?sslmode=disable"
   #dsn: "postgres://user:password@postgres-test.int-tests.orb.local:5432/eventdb_test?sslmode=disable"
 redis:
-  addr: "localhost:6380" # Адрес деплой
+  addr: "localhost:6380" # Адрес тестовой редис базы
   # addr: "rredis-test.int-tests.orb.local:6380" #Адрес для мака
   password: ""
   rdb: 0
