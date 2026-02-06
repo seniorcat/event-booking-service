@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	pb "laschool.ru/event-booking-service/api/v1/booking"
 	_ "laschool.ru/event-booking-service/docs"
@@ -59,15 +60,29 @@ func main() {
 	}
 
 	// маршруты
-	mux := httprouter.NewRouter()
-	// логирование сервера
-	loggingMux := middleware.LoggingMiddleware(mux)
-	muxWithLogAndPanic := middleware.PanicMiddleware(loggingMux)
+
+	//корневой сервер
+	rootMux := http.NewServeMux()
+
+	//эндпоинт для метрик, без middleware
+	rootMux.Handle("/metrics", promhttp.Handler())
+
+	var handler http.Handler
+	appRouter := httprouter.NewRouter()
+	handler = appRouter
+	handler = middleware.MetricsMiddleware(handler)
+	handler = middleware.LoggingMiddleware(handler)
+	handler = middleware.PanicMiddleware(handler)
+	rootMux.Handle("/", handler)
+
+	// // логирование сервера
+	// loggingMux := middleware.LoggingMiddleware(mux)
+	// muxWithLogAndPanic := middleware.PanicMiddleware(loggingMux)
 
 	// старт сервера
 	httpServer := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-		Handler:      muxWithLogAndPanic,
+		Handler:      rootMux,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
