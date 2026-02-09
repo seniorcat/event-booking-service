@@ -1,0 +1,15 @@
+# Конфигурация источника данных для Grafana
+apiVersion: 1
+
+# Список источников данных которые будут созданы автоматически
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090  
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: "POST"

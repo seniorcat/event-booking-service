@@ -1,0 +1,48 @@
+# Конфигурация Prometheus
+global:
+  scrape_interval: 15s      # Как часто собирать метрики (15 секунд)
+  evaluation_interval: 15s  # Как часто оценивать правила алертинга
+
+# Настройки алертинга (опционально, можно добавить позже)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Правила алертинга (опционально)
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# КОНФИГУРАЦИЯ СБОРА МЕТРИК
+scrape_configs:
+  # ========== МЕТРИКИ GO СЕРВИСА ==========
+  - job_name: 'event-booking-service'
+    static_configs:
+      - targets: ['host.docker.internal:8080']  # Магический хост для доступа к localhost из контейнера
+    metrics_path: /metrics  # Путь к метрикам в сервисе
+    scrape_interval: 10s    # Собирать каждые 10 секунд
+    # Можно добавить дополнительные метки (labels)
+    # relabel_configs:
+    #   - source_labels: [__address__]
+    #     target_label: instance
+    #     replacement: 'event-booking-service-local'
+
+  # ========== МЕТРИКИ САМОГО PROMETHEUS ==========
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']  # Prometheus мониторит сам себя
+    scrape_interval: 15s
+
+  # ========== МОНИТОРИНГ POSTGRESQL (ОПЦИОНАЛЬНО) ==========
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres:9187']  # Порт экспортера PostgreSQL
+  #   scrape_interval: 30s
+
+  # ========== МОНИТОРИНГ REDIS (ОПЦИОНАЛЬНО) ==========
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis:9121']  # Порт экспортера Redis
+  #   scrape_interval: 30s
