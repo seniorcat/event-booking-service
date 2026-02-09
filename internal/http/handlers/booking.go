@@ -13,6 +13,7 @@ import (
 	"laschool.ru/event-booking-service/internal/booking"
 	"laschool.ru/event-booking-service/internal/cache"
 	"laschool.ru/event-booking-service/internal/event"
+	"laschool.ru/event-booking-service/internal/http/middleware"
 	"laschool.ru/event-booking-service/pkg/container"
 )
 
@@ -99,6 +100,10 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Booking %d cached successfully", id)
 		}
 	}()
+
+	//Добавлю создание метрики для создания события
+	eventIDtoInt32 := int32(req.EventID)
+	middleware.BookingsCount.WithLabelValues(strconv.Itoa(int(eventIDtoInt32)), "created").Inc()
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
 }
 

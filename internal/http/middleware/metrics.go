@@ -33,6 +33,15 @@ var (
 		},
 		[]string{"method", "route", "status"},
 	)
+
+	//дополнительная метрика
+	BookingsCount = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "booking_bookings_total",
+			Help: "Total number of bookings",
+		},
+		[]string{"event_id", "status"},
+	)
 )
 
 type metricsResponseWriter struct {
