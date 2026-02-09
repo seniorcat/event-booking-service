@@ -17,8 +17,7 @@ func NewRouter() *http.ServeMux {
 		panic("failed to init auth middleware: " + err.Error())
 	}
 
-	mux.HandleFunc("/ping", handlers.PingHandler)
-	mux.HandleFunc("/health", handlers.HealthHandler)
+
 
 	// Swagger UI
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)

@@ -23,6 +23,7 @@ import (
 	"laschool.ru/event-booking-service/internal/event"
 	grpcHandlers "laschool.ru/event-booking-service/internal/grpc/handlers"
 	httprouter "laschool.ru/event-booking-service/internal/http"
+	"laschool.ru/event-booking-service/internal/http/handlers"
 	"laschool.ru/event-booking-service/internal/http/middleware"
 	di "laschool.ru/event-booking-service/pkg/container"
 )
@@ -51,6 +52,22 @@ func main() {
 		log.Fatalf("failed to initialize DI container: %v", err)
 	}
 
+	database, err := ctn.SafeGet(db.DIDatabase)
+	if err != nil {
+		log.Fatalf("database not found in DI container: %v", err)
+	}
+
+	dbInstance, ok := database.(*sqlx.DB)
+	if !ok {
+		log.Fatalf("database has wrong type in DI container")
+	}
+
+	if cfg.Database.AutoMigrate {
+		if err := db.RunMigrations(context.Background(), dbInstance, "deploy/migrations"); err != nil {
+			log.Fatalf("migrations failed: %v", err)
+		}
+	}
+
 	// Optional migrations
 	if cfg.Database.AutoMigrate {
 		database := ctn.Get(db.DIDatabase).(*sqlx.DB)
@@ -58,6 +75,9 @@ func main() {
 			log.Fatalf("migrations failed: %v", err)
 		}
 	}
+
+	// rootMux.Handle("/health")
+	healthController := handlers.NewHealthController(ctn)
 
 	// маршруты
 
@@ -67,12 +87,16 @@ func main() {
 	//эндпоинт для метрик, без middleware
 	rootMux.Handle("/metrics", promhttp.Handler())
 
+	rootMux.HandleFunc("/health", healthController.HealthHandler)
+	rootMux.HandleFunc("/ready", healthController.ReadyHandler)
+
 	var handler http.Handler
 	appRouter := httprouter.NewRouter()
 	handler = appRouter
-	handler = middleware.MetricsMiddleware(handler)
-	handler = middleware.LoggingMiddleware(handler)
+
 	handler = middleware.PanicMiddleware(handler)
+	handler = middleware.LoggingMiddleware(handler)
+	handler = middleware.MetricsMiddleware(handler)
 	rootMux.Handle("/", handler)
 
 	// // логирование сервера
