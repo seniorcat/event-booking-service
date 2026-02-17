@@ -136,3 +136,11 @@ CONFIG_PATH=deploy/local/config.dev.yaml go run ./cmd/server
 # запустить тесты
 go test ./...
 ```
+
+# собрать docker с сервисом:
+
+docker build -t booking-service:latest -f deploy/docker/Dockerfile .
+
+# Команда запуска docker сервиса:
+
+docker run -p 8080:8080 -p 50051:50051 booking-service:latest
