@@ -50,9 +50,9 @@ RUN chown -R appuser:appgroup /app
 # Переключаемся на непривилегированного пользователя
 USER appuser
 
-# Объявляем, что приложение использует порт 8080
-EXPOSE 8080
-EXPOSE 50051  # для gRPC
+
+EXPOSE 8080   
+EXPOSE 50051  
 
 # Команда запуска приложения
 ENTRYPOINT ["./booking-service"]
