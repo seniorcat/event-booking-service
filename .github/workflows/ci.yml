@@ -63,8 +63,7 @@ jobs:
     # ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
     # ==========================================
     env:
-      DATABASE_DSN: postgres://user:password@localhost:5432/eventdb_test?sslmode=disable
-      REDIS_ADDR: localhost:6379
+      CONFIG_PATH: int-tests/config.test.yaml
     
     # ==========================================
     # ШАГИ (STEPS)
@@ -140,18 +139,6 @@ jobs:
           flags: unittests
           name: codecov-umbrella
         # Это опционально, если используете Codecov для визуализации покрытия
-      
-      # ------------------------------------------
-      # Шаг 9: Генерация отчёта о тестах (опционально)
-      # ------------------------------------------
-      - name: Test Report
-        if: always()  # Запускать всегда, даже если тесты упали
-        uses: dorny/test-reporter@v1
-        with:
-          name: Test Results
-          path: '**/*.log'
-          reporter: java-junit
-          fail-on-error: true
 
   # ==========================================
   # JOB 2: BUILD DOCKER ИМЕНЯ
