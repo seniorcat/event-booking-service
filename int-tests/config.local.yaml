@@ -1,0 +1,22 @@
+server:
+  port: 8081
+  read_timeout: 5s
+  write_timeout: 5s
+database:
+  dsn: "postgres://user:password@localhost:5435/eventdb_test?sslmode=disable"
+redis:
+  addr: "localhost:6380"
+  password: ""
+  rdb: 0
+  dial_timeout: 5
+  read_timeout: 3
+  write_timeout: 3
+  pool_timeout: 1
+  max_retries: 3
+  min_retry_backoff: 1
+  max_retry_backoff: 5
+  pool_size: 20
+  min_idle_conns: 5
+  conn_max_idle_time: 300
+  conn_max_lifetime: 3600
+  lock_ttl: 10

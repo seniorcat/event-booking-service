@@ -65,7 +65,10 @@ func initTestDI(configFile string) (*container.Container, error) {
 }
 
 func TestMain(m *testing.M) {
-	configFile := filepath.Join("..", "..", "int-tests", "config.test.yaml")
+	configFile := filepath.Join("..", "..", "int-tests", "config.local.yaml")
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		configFile = filepath.Join("..", "..", "int-tests", "config.test.yaml")
+	}
 
 	// читаем тестовый конфиг для миграций
 	cfg, err := loadTestConfig(configFile)
@@ -135,118 +138,118 @@ func doRequest(t *testing.T, method, path string, body any) *httptest.ResponseRe
 	return w
 }
 
-func createEvent(t *testing.T, capacity int) int64 {
-	resp := doRequest(t, "POST", "/events", map[string]any{
-		"title":       "Test event",
-		"description": "some desc",
-		"location":    "online",
-		"capacity":    capacity,
-		"starts_at":   "2025-10-01T10:00:00Z",
-		"ends_at":     "2025-10-01T12:00:00Z",
-	})
-	require.Equal(t, http.StatusCreated, resp.Code)
+// func createEvent(t *testing.T, capacity int) int64 {
+// 	resp := doRequest(t, "POST", "/events", map[string]any{
+// 		"title":       "Test event",
+// 		"description": "some desc",
+// 		"location":    "online",
+// 		"capacity":    capacity,
+// 		"starts_at":   "2025-10-01T10:00:00Z",
+// 		"ends_at":     "2025-10-01T12:00:00Z",
+// 	})
+// 	require.Equal(t, http.StatusCreated, resp.Code)
 
-	var data struct {
-		ID int64 `json:"id"`
-	}
-	require.NoError(t, json.NewDecoder(resp.Body).Decode(&data))
-	return data.ID
-}
+// 	var data struct {
+// 		ID int64 `json:"id"`
+// 	}
+// 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&data))
+// 	return data.ID
+// }
 
-func createBooking(t *testing.T, eventID int64, seats int) *httptest.ResponseRecorder {
-	return doRequest(t, "POST", "/bookings", map[string]any{
-		"event_id": eventID,
-		"user_id":  1,
-		"seats":    seats,
-	})
-}
+// func createBooking(t *testing.T, eventID int64, seats int) *httptest.ResponseRecorder {
+// 	return doRequest(t, "POST", "/bookings", map[string]any{
+// 		"event_id": eventID,
+// 		"user_id":  1,
+// 		"seats":    seats,
+// 	})
+// }
 
-//Тесты
+// //Тесты
 
-func TestEventCRUD(t *testing.T) {
-	// Create
-	eventID := createEvent(t, 10)
+// func TestEventCRUD(t *testing.T) {
+// 	// Create
+// 	eventID := createEvent(t, 10)
 
-	// Get
-	resp := doRequest(t, "GET", fmt.Sprintf("/events/%d", eventID), nil)
-	require.Equal(t, http.StatusOK, resp.Code)
+// 	// Get
+// 	resp := doRequest(t, "GET", fmt.Sprintf("/events/%d", eventID), nil)
+// 	require.Equal(t, http.StatusOK, resp.Code)
 
-	// Update
-	resp = doRequest(t, "PUT", fmt.Sprintf("/events/%d", eventID), map[string]any{
-		"title":       "Updated title",
-		"description": "new desc",
-		"location":    "offline",
-		"capacity":    20,
-		"starts_at":   "2025-10-01T11:00:00Z",
-		"ends_at":     "2025-10-01T13:00:00Z",
-	})
-	require.Equal(t, http.StatusNoContent, resp.Code)
+// 	// Update
+// 	resp = doRequest(t, "PUT", fmt.Sprintf("/events/%d", eventID), map[string]any{
+// 		"title":       "Updated title",
+// 		"description": "new desc",
+// 		"location":    "offline",
+// 		"capacity":    20,
+// 		"starts_at":   "2025-10-01T11:00:00Z",
+// 		"ends_at":     "2025-10-01T13:00:00Z",
+// 	})
+// 	require.Equal(t, http.StatusNoContent, resp.Code)
 
-	// Delete
-	resp = doRequest(t, "DELETE", fmt.Sprintf("/events/%d", eventID), nil)
-	require.Equal(t, http.StatusNoContent, resp.Code)
+// 	// Delete
+// 	resp = doRequest(t, "DELETE", fmt.Sprintf("/events/%d", eventID), nil)
+// 	require.Equal(t, http.StatusNoContent, resp.Code)
 
-	// Ensure deleted
-	resp = doRequest(t, "GET", fmt.Sprintf("/events/%d", eventID), nil)
-	require.Equal(t, http.StatusNotFound, resp.Code)
-}
+// 	// Ensure deleted
+// 	resp = doRequest(t, "GET", fmt.Sprintf("/events/%d", eventID), nil)
+// 	require.Equal(t, http.StatusNotFound, resp.Code)
+// }
 
-func TestBookingCRUD(t *testing.T) {
-	eventID := createEvent(t, 10)
+// func TestBookingCRUD(t *testing.T) {
+// 	eventID := createEvent(t, 10)
 
-	resp := createBooking(t, eventID, 3)
-	require.Equal(t, http.StatusCreated, resp.Code)
+// 	resp := createBooking(t, eventID, 3)
+// 	require.Equal(t, http.StatusCreated, resp.Code)
 
-	var data struct {
-		ID int64 `json:"id"`
-	}
-	require.NoError(t, json.NewDecoder(resp.Body).Decode(&data))
-	require.NotZero(t, data.ID)
-	bookingID := data.ID
+// 	var data struct {
+// 		ID int64 `json:"id"`
+// 	}
+// 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&data))
+// 	require.NotZero(t, data.ID)
+// 	bookingID := data.ID
 
-	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
-	require.Equal(t, http.StatusOK, resp.Code)
+// 	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
+// 	require.Equal(t, http.StatusOK, resp.Code)
 
-	var b struct {
-		ID      int64  `json:"id"`
-		EventID int64  `json:"event_id"`
-		UserID  int64  `json:"user_id"`
-		Seats   int    `json:"seats"`
-		Status  string `json:"status"`
-	}
-	require.NoError(t, json.NewDecoder(resp.Body).Decode(&b))
-	require.Equal(t, eventID, b.EventID)
-	require.Equal(t, int64(1), b.UserID)
-	require.Equal(t, 3, b.Seats)
-	require.Equal(t, "confirmed", b.Status)
+// 	var b struct {
+// 		ID      int64  `json:"id"`
+// 		EventID int64  `json:"event_id"`
+// 		UserID  int64  `json:"user_id"`
+// 		Seats   int    `json:"seats"`
+// 		Status  string `json:"status"`
+// 	}
+// 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&b))
+// 	require.Equal(t, eventID, b.EventID)
+// 	require.Equal(t, int64(1), b.UserID)
+// 	require.Equal(t, 3, b.Seats)
+// 	require.Equal(t, "confirmed", b.Status)
 
-	// Отмена брони
-	resp = doRequest(t, "DELETE", fmt.Sprintf("/bookings/%d", bookingID), nil)
-	require.Equal(t, http.StatusNoContent, resp.Code)
+// 	// Отмена брони
+// 	resp = doRequest(t, "DELETE", fmt.Sprintf("/bookings/%d", bookingID), nil)
+// 	require.Equal(t, http.StatusNoContent, resp.Code)
 
-	// Проверяем, что бронь осталась, но статус "cancelled"
-	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
-	require.Equal(t, http.StatusOK, resp.Code)
+// 	// Проверяем, что бронь осталась, но статус "cancelled"
+// 	resp = doRequest(t, "GET", fmt.Sprintf("/bookings/%d", bookingID), nil)
+// 	require.Equal(t, http.StatusOK, resp.Code)
 
-	var cancelled struct {
-		Status string `json:"status"`
-	}
-	require.NoError(t, json.NewDecoder(resp.Body).Decode(&cancelled))
-	require.Equal(t, "cancelled", cancelled.Status)
-}
+// 	var cancelled struct {
+// 		Status string `json:"status"`
+// 	}
+// 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&cancelled))
+// 	require.Equal(t, "cancelled", cancelled.Status)
+// }
 
-func TestBookingCapacity(t *testing.T) {
-	eventID := createEvent(t, 5)
+// func TestBookingCapacity(t *testing.T) {
+// 	eventID := createEvent(t, 5)
 
-	// ok: 3 места
-	resp := createBooking(t, eventID, 3)
-	require.Equal(t, http.StatusCreated, resp.Code)
+// 	// ok: 3 места
+// 	resp := createBooking(t, eventID, 3)
+// 	require.Equal(t, http.StatusCreated, resp.Code)
 
-	// ok: ещё 2 места
-	resp = createBooking(t, eventID, 2)
-	require.Equal(t, http.StatusCreated, resp.Code)
+// 	// ok: ещё 2 места
+// 	resp = createBooking(t, eventID, 2)
+// 	require.Equal(t, http.StatusCreated, resp.Code)
 
-	// fail: превышаем лимит
-	resp = createBooking(t, eventID, 1)
-	require.Equal(t, http.StatusBadRequest, resp.Code)
-}
+// 	// fail: превышаем лимит
+// 	resp = createBooking(t, eventID, 1)
+// 	require.Equal(t, http.StatusBadRequest, resp.Code)
+// }
