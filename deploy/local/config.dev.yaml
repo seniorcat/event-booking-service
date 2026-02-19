@@ -1,17 +1,15 @@
 server:
-   port: 8080
-   read_timeout: 5s
-   write_timeout: 5s
+  port: 8080
+  read_timeout: 5s
+  write_timeout: 5s
 database:
-  dsn: "postgres://user:password@localhost:5434/eventdb?sslmode=disable"
-  # dsn: "postgres://user:password@postgres.local.orb.local:5434/eventdb?sslmode=disable" #Строка для разработки на маке
+  dsn: "postgres://user:password@eventdb:5432/eventdb?sslmode=disable"
   auto_migrate: true
 jwt:
   secret: "my-super-secret-jwt-key-minimum-32-charsssss"
   ttl: 24h
 redis:
-  addr: "localhost:6379" # Адрес деплой
-  # addr:: "redis.local.orb.local:6379" #Адрес для мака
+  addr: "eventredis:6379"
   password: ""
   rdb: 0
   # Таймауты
