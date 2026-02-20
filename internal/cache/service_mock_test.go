@@ -13,7 +13,7 @@ import (
 
 func TestSetGetDelete(t *testing.T) {
 	client, mock := redismock.NewClientMock()
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	s := cache.NewService(client, 100*time.Millisecond)
 	ctx := context.Background()
 	value := map[string]string{"foo": "bar"}
@@ -45,7 +45,7 @@ func TestSetGetDelete(t *testing.T) {
 func TestGetProtected_CacheNo_Calculates(t *testing.T) {
 	lockTTL := time.Second
 	client, mock := redismock.NewClientMock()
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	s := cache.NewService(client, time.Second)
 	ctx := context.Background()
 
@@ -69,7 +69,7 @@ func TestGetProtected_CacheNo_Calculates(t *testing.T) {
 
 func TestDeletePattern(t *testing.T) {
 	client, mock := redismock.NewClientMock()
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	s := cache.NewService(client, 100*time.Millisecond)
 	ctx := context.Background()
 
@@ -87,7 +87,7 @@ func TestDeletePattern(t *testing.T) {
 
 func TestDeletePattern_MultiBatch(t *testing.T) {
 	client, mock := redismock.NewClientMock()
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	s := cache.NewService(client, 100*time.Millisecond)
 	ctx := context.Background()
 
@@ -108,7 +108,7 @@ func TestDeletePattern_MultiBatch(t *testing.T) {
 
 func TestWithJitter(t *testing.T) {
 	client, _ := redismock.NewClientMock()
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	s := cache.NewService(client, time.Second)
 
 	base := 1 * time.Second

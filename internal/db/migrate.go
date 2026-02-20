@@ -15,8 +15,9 @@ import (
 func RunMigrations(ctx context.Context, database *sqlx.DB, migrationsDir string) error {
 	goose.SetLogger(goose.NopLogger())
 	goose.SetBaseFS(nil)
-	goose.SetDialect("postgres")
-
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("failed to set dialect: %w", err)
+	}
 	// нормализуем путь (на случай относительных путей)
 	abs, err := filepath.Abs(migrationsDir)
 	if err != nil {

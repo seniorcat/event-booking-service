@@ -262,9 +262,15 @@ func CancelBooking(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 
 		// Удаляем все связанное с бронированиями
-		cacheService.DeletePattern(ctx, "event:*:bookings*")
-		cacheService.DeletePattern(ctx, fmt.Sprintf("booking:%d", id))
-		cacheService.DeletePattern(ctx, "stats:bookings*")
+		if err := cacheService.DeletePattern(ctx, "event:*:bookings*"); err != nil {
+			log.Printf("WARNING: Failed to invalidate cache for bookings: %v", err)
+		}
+		if err := cacheService.DeletePattern(ctx, fmt.Sprintf("booking:%d", id)); err != nil {
+			log.Printf("WARNING: Failed to invalidate cache for booking %d: %v", id, err)
+		}
+		if err := cacheService.DeletePattern(ctx, "stats:bookings*"); err != nil {
+			log.Printf("WARNING: Failed to invalidate cache for stats: %v", err)
+		}
 	}()
 	w.WriteHeader(http.StatusNoContent)
 }
