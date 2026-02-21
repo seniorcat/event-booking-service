@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -50,24 +51,29 @@ func (h *HealthController) ReadyHandler(w http.ResponseWriter, r *http.Request) 
 
 func (h *HealthController) writeError(w http.ResponseWriter, errorMsg string) {
 	w.WriteHeader(http.StatusServiceUnavailable)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":    "not ready",
 		"error":     errorMsg,
 		"service":   "event-booking",
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
+	}); err != nil {
+		log.Printf("Failed to encode response: %v", err)
+		return
+	}
 }
 
 func (h *HealthController) writeSuccess(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":    "ready",
 		"service":   "event-booking",
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 		"checks": map[string]string{
 			"database": "connected",
 		},
-	})
+	}); err != nil {
+		log.Printf("Failed to encode response: %v", err)
+	}
 }
 
 func (h *HealthController) HealthHandler(w http.ResponseWriter, r *http.Request) {

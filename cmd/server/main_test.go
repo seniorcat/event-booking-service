@@ -1,12 +1,9 @@
 package main_test
 
 import (
-	"bytes"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 
 	"os"
 	"path/filepath"
@@ -14,7 +11,6 @@ import (
 	"time"
 
 	"github.com/pressly/goose/v3"
-	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
 	httprouter "laschool.ru/event-booking-service/internal/http"
@@ -122,21 +118,21 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func doRequest(t *testing.T, method, path string, body any) *httptest.ResponseRecorder {
-	var buf bytes.Buffer
-	if body != nil {
-		err := json.NewEncoder(&buf).Encode(body)
-		require.NoError(t, err)
-	}
-	req := httptest.NewRequest(method, path, &buf)
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	server.ServeHTTP(w, req)
-	if w.Code >= 400 {
-		fmt.Printf("\n[DEBUG] %s %s → %d\nResponse body: %s\n\n", method, path, w.Code, w.Body.String())
-	}
-	return w
-}
+// func doRequest(t *testing.T, method, path string, body any) *httptest.ResponseRecorder {
+// 	var buf bytes.Buffer
+// 	if body != nil {
+// 		err := json.NewEncoder(&buf).Encode(body)
+// 		require.NoError(t, err)
+// 	}
+// 	req := httptest.NewRequest(method, path, &buf)
+// 	req.Header.Set("Content-Type", "application/json")
+// 	w := httptest.NewRecorder()
+// 	server.ServeHTTP(w, req)
+// 	if w.Code >= 400 {
+// 		fmt.Printf("\n[DEBUG] %s %s → %d\nResponse body: %s\n\n", method, path, w.Code, w.Body.String())
+// 	}
+// 	return w
+// }
 
 // func createEvent(t *testing.T, capacity int) int64 {
 // 	resp := doRequest(t, "POST", "/events", map[string]any{
