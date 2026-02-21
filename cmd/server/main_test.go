@@ -64,12 +64,16 @@ func initTestDI(configFile string) (*container.Container, error) {
 }
 
 func TestMain(m *testing.M) {
-	// Приоритет конфигов: local -> ci -> test
-	configFile := filepath.Join("..", "..", "int-tests", "config.local.yaml")
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		configFile = filepath.Join("..", "..", "int-tests", "config.ci.yaml")
+	// Определяем configFile через переменную окружения или выбираем из доступных
+	configFile := os.Getenv("CONFIG_PATH")
+	if configFile == "" {
+		// Приоритет конфигов: local -> ci -> test
+		configFile = filepath.Join("..", "..", "int-tests", "config.local.yaml")
 		if _, err := os.Stat(configFile); os.IsNotExist(err) {
-			configFile = filepath.Join("..", "..", "int-tests", "config.test.yaml")
+			configFile = filepath.Join("..", "..", "int-tests", "config.ci.yaml")
+			if _, err := os.Stat(configFile); os.IsNotExist(err) {
+				configFile = filepath.Join("..", "..", "int-tests", "config.test.yaml")
+			}
 		}
 	}
 
