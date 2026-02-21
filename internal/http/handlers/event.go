@@ -270,14 +270,16 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		// 1. Обновляем событие
 		eventKey := fmt.Sprintf("event:%d", id)
-		cacheService.Set(ctx, eventKey, updatedEvent, 30*time.Minute)
+		if err := cacheService.Set(ctx, eventKey, updatedEvent, 30*time.Minute); err != nil {
+			log.Printf("WARNING: Failed to cache event %d: %v", id, err)
+		} else {
+			log.Printf("Event %d cached successfully", id)
+		}
 
-		// 2. Инвалидируем списки
-		cacheService.DeletePattern(ctx, "events:list*")
-
-		log.Printf("Event %d cache updated", id)
+		if err := cacheService.DeletePattern(ctx, "events:list*"); err != nil {
+			log.Printf("WARNING: Failed to invalidate cache pattern: %v", err)
+		}
 	}()
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -321,8 +323,12 @@ func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 
 		cacheKey := fmt.Sprintf("event:%d", id)
-		cacheService.Delete(ctx, cacheKey)
-		cacheService.DeletePattern(ctx, "events:list*")
+		if err := cacheService.Delete(ctx, cacheKey); err != nil {
+			log.Printf("WARNING: Failed to delete cache key %s: %v", cacheKey, err)
+		}
+		if err := cacheService.DeletePattern(ctx, "events:list*"); err != nil {
+			log.Printf("WARNING: Failed to delete cache pattern events:list*: %v", err)
+		}
 
 		log.Printf("Event %d cache updated", id)
 	}()

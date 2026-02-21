@@ -79,11 +79,13 @@ func (h *HealthController) writeSuccess(w http.ResponseWriter) {
 func (h *HealthController) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	if err := json.NewEncoder(w).Encode(map[string]string{
 		"status":    "healthy",
 		"service":   "event-booking",
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
-	})
+	}); err != nil {
+		log.Printf("Failed to encode health response: %v", err)
+	}
 }
 
 // PingHandler godoc
@@ -102,5 +104,7 @@ func (h *HealthController) HealthHandler(w http.ResponseWriter, r *http.Request)
 // @Router       /ping [get]
 func PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("pong"))
+	if _, err := w.Write([]byte("pong")); err != nil {
+		log.Printf("Failed to write ping response: %v", err)
+	}
 }

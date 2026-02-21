@@ -45,8 +45,12 @@ func TestMain(m *testing.M) {
 		ConnMaxLifetime: time.Duration(cfg.Redis.ConnMaxLifetime) * time.Second,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	defer rdb.Close()
+	defer func() {
+		cancel()
+		if err := rdb.Close(); err != nil {
+			log.Printf("WARNING: Failed to close Redis connection: %v", err)
+		}
+	}()
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		panic("failed to connect to Redis: " + err.Error())
 	}
@@ -127,20 +131,20 @@ func TestIntegration_GetProtected(t *testing.T) {
 	defer cancel()
 	key := "it:" + t.Name()
 	t.Cleanup(func() { _ = svc.Delete(context.Background(), key) })
-	
+
 	// Тестируем кэш промах - функция calculate вызывается и сохраняется результат
 	value := "protected value"
 	calculateFunc := func() (any, error) {
 		return value, nil
 	}
-	
+
 	valFromFuncTest, err := svc.GetProtected(ctx, key, calculateFunc, time.Minute)
 	require.NoError(t, err, "failed to call GetProtected for cache miss")
-	
+
 	expectedData, err := json.Marshal(value)
 	require.NoError(t, err, "failed to marshal expected value")
 	require.Equal(t, expectedData, valFromFuncTest, "expected and actual are not equal")
-	
+
 	// Проверяем, что значение действительно сохранено в кэше
 	var cached string
 	found, err := svc.Get(ctx, key, &cached)

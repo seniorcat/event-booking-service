@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"laschool.ru/event-booking-service/internal/http/handlers"
@@ -51,10 +52,12 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"id":      id,
 		"message": "user registered successfully",
-	})
+	}); err != nil {
+		log.Printf("Failed to encode registration response: %v", err)
+	}
 }
 
 // LoginHandler godoc
@@ -103,8 +106,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": token,
-	})
+	}); err != nil {
+		log.Printf("Failed to encode login response: %v", err)
+	}
 
 }

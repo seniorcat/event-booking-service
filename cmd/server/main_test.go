@@ -3,6 +3,7 @@ package main_test
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 
 	"os"
@@ -113,7 +114,9 @@ func TestMain(m *testing.M) {
 	}
 
 	// удаляем контейнер
-	ctn.DeleteWithSubContainers()
+	if err := ctn.DeleteWithSubContainers(); err != nil {
+		log.Printf("WARNING: Failed to delete DI container: %v", err)
+	}
 
 	os.Exit(code)
 }
