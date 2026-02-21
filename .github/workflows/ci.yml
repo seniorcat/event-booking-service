@@ -63,7 +63,7 @@ jobs:
     # ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
     # ==========================================
     env:
-      CONFIG_PATH: int-tests/config.ci.yaml
+      CONFIG_PATH: ${{ github.workspace }}/int-tests/config.ci.yaml
     
     # ==========================================
     # ШАГИ (STEPS)
