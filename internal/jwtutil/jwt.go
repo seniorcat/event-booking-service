@@ -52,7 +52,10 @@ func ValidateJWT(tokenStr, secret string) (*Claims, error) {
 	if claims.ExpiresAt == nil {
 		return nil, errors.New("token missing exp")
 	}
-	if time.Now().After(claims.ExpiresAt.Time.Add(-5 * time.Second)) {
+
+	// Use time.Time directly for comparison to avoid staticcheck warning
+	expiresAtTime := claims.ExpiresAt.Time
+	if time.Now().After(expiresAtTime.Add(-5 * time.Second)) {
 		return nil, errors.New("token expired")
 	}
 

@@ -51,7 +51,9 @@ func loadTestConfig(path string) (*TestConfig, error) {
 }
 
 func initTestDI(configFile string) (*container.Container, error) {
-	os.Setenv("CONFIG_PATH", configFile)
+	if err := os.Setenv("CONFIG_PATH", configFile); err != nil {
+		return nil, fmt.Errorf("failed to set CONFIG_PATH: %w", err)
+	}
 
 	ctn, err := container.Instance(nil, nil) // возвращает di.Container
 	if err != nil {
