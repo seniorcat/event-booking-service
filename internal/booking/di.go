@@ -3,6 +3,7 @@ package booking
 import (
 	"github.com/jmoiron/sqlx"
 	"laschool.ru/event-booking-service/internal/db"
+	"laschool.ru/event-booking-service/internal/notification"
 	"laschool.ru/event-booking-service/pkg/container"
 )
 
@@ -26,7 +27,8 @@ func init() {
 			Name: DIBookingService,
 			Build: func(ctn container.Container) (interface{}, error) {
 				repo := ctn.Get(DIBookingRepo).(Repository)
-				return NewService(repo), nil
+				publisher := ctn.Get(notification.DIPublisher).(notification.Publisher)
+				return NewService(repo, publisher), nil
 			},
 		})
 	})

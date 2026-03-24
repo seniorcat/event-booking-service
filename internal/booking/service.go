@@ -3,6 +3,10 @@ package booking
 import (
 	"context"
 	"errors"
+	"log"
+	"time"
+
+	"laschool.ru/event-booking-service/internal/notification"
 )
 
 type Service interface {
@@ -13,11 +17,12 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
+	repo      Repository
+	publisher notification.Publisher
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(repo Repository, publisher notification.Publisher) Service {
+	return &service{repo: repo, publisher: publisher}
 }
 
 func (s *service) Create(ctx context.Context, b *Booking, eventCapacity int) (int64, error) {
@@ -34,7 +39,30 @@ func (s *service) Create(ctx context.Context, b *Booking, eventCapacity int) (in
 	if used+b.Seats > eventCapacity {
 		return 0, errors.New("not enough seats")
 	}
-	return s.repo.Create(ctx, b)
+	bookingID, err := s.repo.Create(ctx, b)
+	if err != nil {
+		return 0, err
+	}
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("panic in publisher: %v", r)
+			}
+		}()
+		event := &notification.NotificationEvent{
+			Event:      "booking.created",
+			BookingID:  bookingID,
+			UserID:     b.UserID,
+			EventID:    b.EventID,
+			OccurredAt: time.Now().UTC(),
+		}
+		if err := s.publisher.Publish(context.Background(), event); err != nil {
+			log.Printf("failed to publish booking.created: %v", err)
+		}
+
+	}()
+	return bookingID, nil
 }
 
 func (s *service) Get(ctx context.Context, id int64) (*Booking, error) {
@@ -55,5 +83,35 @@ func (s *service) Cancel(ctx context.Context, id int64) error {
 	if id == 0 {
 		return errors.New("id is required")
 	}
-	return s.repo.Cancel(ctx, id)
+
+	err := s.repo.Cancel(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Получаем booking для данных уведомления
+	b, err := s.repo.GetByID(ctx, id)
+	if err == nil {
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("panic in publisher: %v", r)
+				}
+			}()
+
+			event := &notification.NotificationEvent{
+				Event:      "booking.cancelled",
+				BookingID:  b.ID,
+				UserID:     b.UserID,
+				EventID:    b.EventID,
+				OccurredAt: time.Now().UTC(),
+			}
+
+			if err := s.publisher.Publish(context.Background(), event); err != nil {
+				log.Printf("failed to publish booking.cancelled: %v", err)
+			}
+		}()
+	}
+
+	return nil
 }

@@ -46,11 +46,20 @@ type Redis struct {
 	LockTTL int `yaml:"lock_ttl"`
 }
 
+type RabbitMQ struct {
+	DSN          string `yaml:"dsn"`
+	QueueName    string `yaml:"queue_name"`
+	Exchange     string `yaml:"exchange_name"`
+	ExchangeType string `yaml:"exchange_type"`
+	RoutingKey   string `yaml:"routing_key"`
+}
+
 type Config struct {
 	Server   Server   `yaml:"server"`
 	Database Database `yaml:"database"`
 	JWT      JWT      `yaml:"jwt"`
 	Redis    Redis    `yaml:"redis"`
+	RabbitMQ RabbitMQ `yaml:"rabbitmq"`
 }
 
 func Load(path string) (*Config, error) {

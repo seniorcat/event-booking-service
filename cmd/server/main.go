@@ -23,6 +23,7 @@ import (
 	grpcHandlers "laschool.ru/event-booking-service/internal/grpc/handlers"
 	httprouter "laschool.ru/event-booking-service/internal/http"
 	"laschool.ru/event-booking-service/internal/http/middleware"
+	"laschool.ru/event-booking-service/internal/notification"
 	di "laschool.ru/event-booking-service/pkg/container"
 )
 
@@ -49,6 +50,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize DI container: %v", err)
 	}
+
+	// Create context for consumer (used for graceful shutdown)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Optional migrations
 	if cfg.Database.AutoMigrate {
@@ -101,21 +106,42 @@ func main() {
 		}
 	}()
 
+	// Get consumer from DI container
+	notificationConsumer := ctn.Get(notification.DIConsumer).(notification.Consumer)
+
+	// Start consumer in a separate goroutine
+	go func() {
+		log.Println("Starting notification consumer...")
+		if err := notificationConsumer.Consume(ctx); err != nil && err != context.Canceled {
+			log.Printf("consumer error: %v", err)
+		}
+	}()
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutdown signal received, stopping servers...")
 
+	// Cancel context to stop consumer
+	cancel()
+	log.Println("Stopping notification consumer...")
+
+	// Give consumer a moment to finish processing
+	time.Sleep(500 * time.Millisecond)
+
+	// Close consumer connection
+	notificationConsumer.Close()
+	log.Println("Notification consumer stopped")
+
 	// Stop accepting new gRPC connections and wait for ongoing
 	grpcServer.GracefulStop()
 
 	// Shutdown HTTP with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := httpServer.Shutdown(ctx); err != nil {
 		log.Printf("HTTP server shutdown error: %v", err)
 	}
 
 	log.Println("Servers stopped")
-
 }
